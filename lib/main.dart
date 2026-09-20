@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const GlobalApp());
@@ -50,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Map View':
         return const Center(child: Text('نقشہ (Map View)', style: TextStyle(fontSize: 20)));
       case 'Today Activity Remarks':
-        return const SaleOrdersScreen(); // آج کی سمری اور سیل آرڈرز
+        return const SaleOrdersScreen();
       case 'Sale Targets':
         return const Center(child: Text('سیل ٹارگٹس', style: TextStyle(fontSize: 20)));
       case 'Sync Data':
@@ -186,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// گلوبل اسٹوریج (ڈیٹا اور سیل آرڈرز کے لیے)
+// گلوبل ڈیٹا اسٹوریج
 class AppData {
   static final List<Map<String, dynamic>> globalOutlets = [
     {
@@ -213,7 +214,7 @@ class AppData {
       'size': '18 Gm * 240',
       'cottonRate': 2244.0,
       'packetRate': 9.35,
-      'cottonStock': 9.0,
+      'cottonStock': 50.0,
       'packetStock': 108.0,
       'counterUnitPrice': 0.0,
       'retail': 10.0,
@@ -223,18 +224,17 @@ class AppData {
       'size': '85 Gm * 66',
       'cottonRate': 3036.0,
       'packetRate': 46.0,
-      'cottonStock': 27.0,
+      'cottonStock': 40.0,
       'packetStock': 24.0,
       'counterUnitPrice': 0.0,
       'retail': 50.0,
     },
   ];
 
-  // تمام سیل آرڈرز کو محفوظ کرنے کی لسٹ
   static final List<Map<String, dynamic>> savedOrders = [];
 }
 
-// 1. آؤٹ لیٹس سکرین (سرچ اور ایڈٹ کے ساتھ)
+// آؤٹ لیٹس سکرین
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({Key? key}) : super(key: key);
 
@@ -307,7 +307,6 @@ class _OutletsScreenState extends State<OutletsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // سرچ اور الفابیٹیکل ترتیب
     var filteredOutlets = AppData.globalOutlets.where((o) {
       final name = o['name'].toLowerCase();
       final owner = o['owner'].toLowerCase();
@@ -387,10 +386,13 @@ class _OutletsScreenState extends State<OutletsScreen> {
   }
 }
 
-// 2. دکان کا آرڈر لینے والا صفحہ (محفوظ کرنے کے بٹن کے ساتھ)
+// دکان کا آرڈر لینے والا صفحہ (جس سے اسٹاک بھی مائنس ہوگا)
 class OutletOrderScreen extends StatefulWidget {
   final String outletName;
-  const OutletOrderScreen({Key? key, required this.outletName}) : super(key: key);
+  final Map<String, dynamic>? existingOrder;
+  final int? orderIndex;
+
+  const OutletOrderScreen({Key? key, required this.outletName, this.existingOrder, this.orderIndex}) : super(key: key);
 
   @override
   _OutletOrderScreenState createState() => _OutletOrderScreenState();
@@ -403,9 +405,24 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
   void initState() {
     super.initState();
     for (int i = 0; i < AppData.globalProducts.length; i++) {
+      String initialCotton = '0';
+      String initialPacket = '0';
+
+      if (widget.existingOrder != null) {
+        final items = widget.existingOrder!['items'] as List;
+        final pName = AppData.globalProducts[i]['title'];
+        final pSize = AppData.globalProducts[i]['size'];
+        for (var item in items) {
+          if (item['title'] == pName && item['size'] == pSize) {
+            initialCotton = item['cotton'].toString();
+            initialPacket = item['packet'].toString();
+          }
+        }
+      }
+
       _controllers[i] = {
-        'cotton': TextEditingController(text: '0'),
-        'packet': TextEditingController(text: '0'),
+        'cotton': TextEditingController(text: initialCotton),
+        'packet': TextEditingController(text: initialPacket),
       };
     }
   }
@@ -449,6 +466,12 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
           'packet': packetQty,
           'total': (cottonQty * p['cottonRate']) + (packetQty * p['packetRate']),
         });
+
+        // اسٹاک میں سے مقدار مائنس کریں
+        setState(() {
+          p['cottonStock'] = (p['cottonStock'] ?? 0.0) - cottonQty;
+          p['packetStock'] = (p['packetStock'] ?? 0.0) - packetQty;
+        });
       }
     }
 
@@ -458,15 +481,21 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
     }
 
     setState(() {
-      AppData.savedOrders.add({
+      final newOrderData = {
         'outletName': widget.outletName,
         'date': DateTime.now().toString().substring(0, 16),
         'items': orderedItems,
         'grandTotal': _calculateTotalAmount(),
-      });
+      };
+
+      if (widget.existingOrder != null && widget.orderIndex != null) {
+        AppData.savedOrders[widget.orderIndex!] = newOrderData;
+      } else {
+        AppData.savedOrders.add(newOrderData);
+      }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('آرڈر کامیابی سے محفوظ ہو گیا ہے!')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('آرڈر کامیابی سے محفوظ ہو گیا ہے اور اسٹاک اپ ڈیٹ ہو گیا ہے!')));
     Navigator.pop(context);
   }
 
@@ -475,7 +504,7 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004080),
-        title: Text('آرڈر: ${widget.outletName}', style: const TextStyle(color: Colors.white, fontSize: 15)),
+        title: Text(widget.existingOrder != null ? 'ترمیم آرڈر: ${widget.outletName}' : 'آرڈر: ${widget.outletName}', style: const TextStyle(color: Colors.white, fontSize: 15)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -530,6 +559,7 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
+                                      Text('Available Stock: C: ${p['cottonStock']} | P: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.blue)),
                                       Text('Retail: ${p['retail']}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
@@ -607,9 +637,108 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
   }
 }
 
-// 3. سیل آرڈرز اور ٹوڈے سمری سکرین
-class SaleOrdersScreen extends StatelessWidget {
+// سیل آرڈرز اور ٹوڈے سمری سکرین (تھری ڈاٹس مینو اور ایڈٹ کے ساتھ)
+class SaleOrdersScreen extends StatefulWidget {
   const SaleOrdersScreen({Key? key}) : super(key: key);
+
+  @override
+  _SaleOrdersScreenState createState() => _SaleOrdersScreenState();
+}
+
+class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
+  void _handleMenuAction(String action, Map<String, dynamic> order, int index) {
+    if (action == 'edit') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OutletOrderScreen(
+            outletName: order['outletName'],
+            existingOrder: order,
+            orderIndex: index,
+          ),
+        ),
+      ).then((_) => setState(() {}));
+    } else if (action == 'whatsapp') {
+      _sendWhatsAppReminder(order);
+    } else if (action == 'payment') {
+      _showReminderDialog(context, 'پیمنٹ ریمائنڈر', 'محترم دکاندار، آپ کا بل رقم Rs: ${order['grandTotal']} واجب الادا ہے۔ براہ کرم ادائیگی فرما دیں۔');
+    } else if (action == 'invoice') {
+      _showInvoiceDialog(context, order);
+    } else if (action == 'recovery') {
+      _showReminderDialog(context, 'ریکوری نوٹس', 'آپ کی دکان ${order['outletName']} کی ریکوری فالو اپ کے لیے سیٹ کر دی گئی ہے۔');
+    }
+  }
+
+  void _sendWhatsAppReminder(Map<String, dynamic> order) async {
+    final message = 'السلام علیکم! آپ کا آرڈر برائے دکان ${order['outletName']} موصول ہو گیا ہے۔ کل بل رقم: Rs: ${order['grandTotal']}۔ شکریہ!';
+    final url = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(message)}');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('واٹس ایپ لنک اوپن نہیں ہو سکا')));
+    }
+  }
+
+  void _showReminderDialog(BuildContext context, String title, String msg) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(msg),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('بند کریں')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ریماینڈر کامیابی سے ارسال کر دیا گیا')));
+            },
+            child: const Text('ارسال کریں', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInvoiceDialog(BuildContext context, Map<String, dynamic> order) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('انگوائس (Invoice): ${order['outletName']}'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('تاریخ: ${order['date']}'),
+              const Divider(),
+              ...((order['items'] as List).map((item) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('${item['title']} (${item['size']})', style: const TextStyle(fontSize: 12)),
+                        Text('Rs: ${item['total']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ))),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('کل بل:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Rs: ${order['grandTotal'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('بند کریں')),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -633,7 +762,21 @@ class SaleOrdersScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(order['outletName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF004080))),
-                            Text(order['date'], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            Row(
+                              children: [
+                                Text(order['date'], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                PopupMenuButton<String>(
+                                  onSelected: (val) => _handleMenuAction(val, order, index),
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(value: 'edit', child: Text('ترمیم کریں (Edit)')),
+                                    const PopupMenuItem(value: 'whatsapp', child: Text('واٹس ایپ ریمائنڈر (WhatsApp)')),
+                                    const PopupMenuItem(value: 'payment', child: Text('پیمنٹ ریمائنڈر (Payment)')),
+                                    const PopupMenuItem(value: 'invoice', child: Text('انگوائس دیکھیں (Invoice)')),
+                                    const PopupMenuItem(value: 'recovery', child: Text('ریکوری فالو اپ (Recovery)')),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                         const Divider(),
@@ -665,7 +808,7 @@ class SaleOrdersScreen extends StatelessWidget {
   }
 }
 
-// 4. پروڈکٹس سکرین (سرچ، ایڈٹ اور ڈیلیٹ آپشن کے ساتھ)
+// پروڈکٹس سکرین
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({Key? key}) : super(key: key);
 
