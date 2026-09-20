@@ -31,7 +31,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  // محفوظ شدہ آؤٹ لیٹس کی فہرست
   final List<Map<String, dynamic>> _outlets = [
     {'id': 1, 'name': 'المدینہ جنرل سٹور، کراچی'},
     {'id': 2, 'name': 'البحرین سپر مارکیٹ'},
@@ -67,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004080),
+        // بائیں طرف لوگو اور نام
         title: Row(
           children: [
             Container(
@@ -83,36 +83,39 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
-            const Text('گلوبل ڈیجیٹل کھاتہ', style: TextStyle(fontSize: 18, color: Colors.white)),
+            const SizedBox(width: 8),
+            const Text(
+              'گلوبل ڈیجیٹل کھاتہ',
+              style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
-      ),
-      body: _currentIndex == 0 ? _buildOutletsTab() : const LedgerTab(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        selectedItemColor: const Color(0xFFFF9900),
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.store),
-            label: 'مائی آؤٹ لیٹس',
+        // دائیں طرف مینو آپشنز/آئکنز
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.store, color: Colors.white),
+            tooltip: 'مائی آؤٹ لیٹس',
+            onPressed: () {
+              setState(() {
+                _currentIndex = 0;
+              });
+            },
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet),
-            label: 'ڈیجیٹل کھاتہ',
+          IconButton(
+            icon: const Icon(Icons.account_balance_wallet, color: Colors.white),
+            tooltip: 'ڈیجیٹل کھاتہ',
+            onPressed: () {
+              setState(() {
+                _currentIndex = 1;
+              });
+            },
           ),
         ],
       ),
+      body: _currentIndex == 0 ? _buildOutletsTab() : const LedgerTab(),
     );
   }
 
-  // مائی آؤٹ لیٹس اور سرچ بار کا ٹیب
   Widget _buildOutletsTab() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -121,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           const Text(
             'مائی آؤٹ لیٹس (دکانیں)',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF004080)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF004080)),
           ),
           const SizedBox(height: 10),
           TextField(
@@ -133,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+              contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
             ),
           ),
           const SizedBox(height: 15),
@@ -178,7 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// آرڈر پنچ کرنے کی سکرین
 class OrderPunchScreen extends StatefulWidget {
   final String outletName;
   const OrderPunchScreen({Key? key, required this.outletName}) : super(key: key);
@@ -268,7 +270,6 @@ class _OrderPunchScreenState extends State<OrderPunchScreen> {
   }
 }
 
-// ڈیجیٹل کھاتہ ٹیب
 class LedgerTab extends StatelessWidget {
   const LedgerTab({Key? key}) : super(key: key);
 
@@ -281,7 +282,7 @@ class LedgerTab extends StatelessWidget {
         children: [
           const Text(
             'گلوبل ڈیجیٹل کھاتہ (لیجر)',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF004080)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF004080)),
           ),
           const SizedBox(height: 15),
           Container(
