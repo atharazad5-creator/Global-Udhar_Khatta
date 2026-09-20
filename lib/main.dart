@@ -36,13 +36,13 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Home':
         return _buildHomeDashboard();
       case 'My Outlets':
-        return const OutletsScreen(); // اپ ڈیٹ شدہ آؤٹ لیٹس سکرین
+        return const OutletsScreen();
       case 'Planed Outlets':
         return const Center(child: Text('پلانڈ آؤٹ لیٹس', style: TextStyle(fontSize: 20)));
       case 'Routes':
         return const Center(child: Text('روٹس (Routes)', style: TextStyle(fontSize: 20)));
       case 'Products':
-        return const ProductsScreen(); // پروڈکٹس سکرین
+        return const ProductsScreen(); // اب اس میں پلس اور مکمل تفصیلات موجود ہیں
       case 'Recoveries':
         return const Center(child: Text('ریکوریز (Recoveries)', style: TextStyle(fontSize: 20)));
       case 'Sale Orders':
@@ -196,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// 1. آؤٹ لیٹس سکرین (جس میں پلس کا بٹن اور دکان دار کا انفارمیشن فارم ہے)
+// 1. آؤٹ لیٹس سکرین (نئی دکان ایڈ کرنے اور آرڈر پیج پر جانے کے لیے)
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({Key? key}) : super(key: key);
 
@@ -274,7 +274,6 @@ class _OutletsScreenState extends State<OutletsScreen> {
               trailing: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                 onPressed: () {
-                  // دکان سلیکٹ کرنے پر پروڈکٹ/آرڈر پیج کھل جائے گا
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -297,7 +296,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
   }
 }
 
-// 2. دکان کا آرڈر اور پروڈکٹ سکرین (جو پچھلے سٹیپ میں بنائی گئی تھی)
+// 2. دکان کا آرڈر لینے والا صفحہ (مکمل پروڈکٹ لسٹ کے ساتھ)
 class OutletOrderScreen extends StatelessWidget {
   final String outletName;
   const OutletOrderScreen({Key? key, required this.outletName}) : super(key: key);
@@ -305,14 +304,39 @@ class OutletOrderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> products = [
-      {'title': '10760 Vista Detergent Powder 18 Gm*240 (Rs:10)', 'cottonRate': 2244.0, 'packetRate': 9.35, 'cottonStock': 9.0, 'packetStock': 108.0, 'retail': 10.0},
-      {'title': '10761 Vista Detergent Powder 85 Gm*66 (Rs:50)', 'cottonRate': 3036.0, 'packetRate': 46.0, 'cottonStock': 27.0, 'packetStock': 24.0, 'retail': 50.0},
+      {
+        'title': '10760 Vista Detergent Powder 18 Gm*240 (Rs:10)',
+        'cottonRate': 2244.0,
+        'packetRate': 9.35,
+        'cottonStock': 9.0,
+        'packetStock': 108.0,
+        'counterUnitPrice': 0.0,
+        'retail': 10.0,
+      },
+      {
+        'title': '10761 Vista Detergent Powder 85 Gm*66 (Rs:50)',
+        'cottonRate': 3036.0,
+        'packetRate': 46.0,
+        'cottonStock': 27.0,
+        'packetStock': 24.0,
+        'counterUnitPrice': 0.0,
+        'retail': 50.0,
+      },
+      {
+        'title': '10763 Vista Detergent Powder 500 Gm*24',
+        'cottonRate': 6844.8,
+        'packetRate': 285.2,
+        'cottonStock': 0.0,
+        'packetStock': 22.0,
+        'counterUnitPrice': 0.0,
+        'retail': 310.0,
+      },
     ];
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004080),
-        title: Text('آرڈر: $outletName', style: const TextStyle(color: Colors.white, fontSize: 16)),
+        title: Text('آرڈر: $outletName', style: const TextStyle(color: Colors.white, fontSize: 15)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: ListView.builder(
@@ -358,7 +382,7 @@ class OutletOrderScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Counter Unit Price: 0.0', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                            Text('Counter Unit Price: ${p['counterUnitPrice']}', style: const TextStyle(fontSize: 11, color: Colors.black54)),
                             Text('Retail: ${p['retail']}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
                           ],
                         ),
@@ -375,14 +399,159 @@ class OutletOrderScreen extends StatelessWidget {
   }
 }
 
-// 3. مرکزی پروڈکٹس سکرین (مین مینو کے لیے)
-class ProductsScreen extends StatelessWidget {
+// 3. مرکزی پروڈکٹس سکرین (جس میں پلس بٹن اور تمام تفصیلات والے کالم موجود ہیں)
+class ProductsScreen extends StatefulWidget {
   const ProductsScreen({Key? key}) : super(key: key);
 
   @override
+  _ProductsScreenState createState() => _ProductsScreenState();
+}
+
+class _ProductsScreenState extends State<ProductsScreen> {
+  final List<Map<String, dynamic>> _products = [
+    {
+      'title': '10760 Vista Detergent Powder 18 Gm*240 (Rs:10)',
+      'cottonRate': 2244.0,
+      'packetRate': 9.35,
+      'cottonStock': 9.0,
+      'packetStock': 108.0,
+      'counterUnitPrice': 0.0,
+      'retail': 10.0,
+    },
+    {
+      'title': '10761 Vista Detergent Powder 85 Gm*66 (Rs:50)',
+      'cottonRate': 3036.0,
+      'packetRate': 46.0,
+      'cottonStock': 27.0,
+      'packetStock': 24.0,
+      'counterUnitPrice': 0.0,
+      'retail': 50.0,
+    },
+  ];
+
+  void _addNewProductDialog() {
+    final titleController = TextEditingController();
+    final cottonRateController = TextEditingController();
+    final packetRateController = TextEditingController();
+    final cottonStockController = TextEditingController();
+    final packetStockController = TextEditingController();
+    final counterUnitPriceController = TextEditingController();
+    final retailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('نئی پروڈکٹ شامل کریں'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: titleController, decoration: const InputDecoration(labelText: 'پروڈکٹ کا نام')),
+                TextField(controller: cottonRateController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'کارٹن ریٹ (Cotton Rate)')),
+                TextField(controller: packetRateController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'پیکٹ ریٹ (Packet Rate)')),
+                TextField(controller: cottonStockController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'کارٹن اسٹاک (Cotton Stock)')),
+                TextField(controller: packetStockController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'پیکٹ اسٹاک (Packet Stock)')),
+                TextField(controller: counterUnitPriceController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'کاؤنٹر یونٹ پرائس')),
+                TextField(controller: retailController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'ریٹیل قیمت (Retail)')),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('منسوخ'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
+              onPressed: () {
+                if (titleController.text.isNotEmpty) {
+                  setState(() {
+                    _products.add({
+                      'title': titleController.text,
+                      'cottonRate': double.tryParse(cottonRateController.text) ?? 0.0,
+                      'packetRate': double.tryParse(packetRateController.text) ?? 0.0,
+                      'cottonStock': double.tryParse(cottonStockController.text) ?? 0.0,
+                      'packetStock': double.tryParse(packetStockController.text) ?? 0.0,
+                      'counterUnitPrice': double.tryParse(counterUnitPriceController.text) ?? 0.0,
+                      'retail': double.tryParse(retailController.text) ?? 0.0,
+                    });
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('محفوظ کریں', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('پروڈکٹس مینجمنٹ سکرین', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+    return Scaffold(
+      body: ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: _products.length,
+        itemBuilder: (context, index) {
+          final p = _products[index];
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.inventory_2, color: Colors.grey),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(p['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Cotton Rate: ${p['cottonRate']}', style: const TextStyle(fontSize: 11)),
+                            Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Cotton Stock: ${p['cottonStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                            Text('Packet Stock: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Counter Unit Price: ${p['counterUnitPrice']}', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                            Text('Retail: ${p['retail']}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF004080),
+        onPressed: _addNewProductDialog,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 }
