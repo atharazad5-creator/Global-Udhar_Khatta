@@ -31,7 +31,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _selectedTitle = 'Home';
 
-  // مختلف سکرینز کا مواد دکھانے کے لیے فنكشن
+  // مختلف سکرینز کا مواد دکھانے کے لیے فنکشن
   Widget _getSelectedScreen() {
     switch (_selectedTitle) {
       case 'Home':
@@ -126,7 +126,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        // دائیں طرف مینو کھولنے کے لیے بٹن (EndDrawer کھلنے کا خودکار ہینڈل)
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       // دائیں طرف سے کھلنے والا مینو (EndDrawer)
@@ -176,10 +175,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // مینو کے ہر آئٹم کا ڈیزائن
-  Widget IconData(IconData icon, String title) {
-    return const Icon(Icons.home);
-  }
-
   Widget _drawerItem(IconData icon, String title, {bool isLogout = false}) {
     return ListTile(
       leading: Icon(icon, color: isLogout ? Colors.red : const Color(0xFF004080)),
