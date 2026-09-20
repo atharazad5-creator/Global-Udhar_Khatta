@@ -46,11 +46,11 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Recoveries':
         return const Center(child: Text('ریکوریز (Recoveries)', style: TextStyle(fontSize: 20)));
       case 'Sale Orders':
-        return const Center(child: Text('سیل آرڈرز', style: TextStyle(fontSize: 20)));
+        return const SaleOrdersScreen();
       case 'Map View':
         return const Center(child: Text('نقشہ (Map View)', style: TextStyle(fontSize: 20)));
       case 'Today Activity Remarks':
-        return const Center(child: Text('آج کی سرگرمی اور ریمارکس', style: TextStyle(fontSize: 20)));
+        return const SaleOrdersScreen(); // آج کی سمری اور سیل آرڈرز
       case 'Sale Targets':
         return const Center(child: Text('سیل ٹارگٹس', style: TextStyle(fontSize: 20)));
       case 'Sync Data':
@@ -186,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// گلوبل اسٹوریج
+// گلوبل اسٹوریج (ڈیٹا اور سیل آرڈرز کے لیے)
 class AppData {
   static final List<Map<String, dynamic>> globalOutlets = [
     {
@@ -229,9 +229,12 @@ class AppData {
       'retail': 50.0,
     },
   ];
+
+  // تمام سیل آرڈرز کو محفوظ کرنے کی لسٹ
+  static final List<Map<String, dynamic>> savedOrders = [];
 }
 
-// 1. آؤٹ لیٹس سکرین (ایڈٹ آپشن کے ساتھ)
+// 1. آؤٹ لیٹس سکرین (سرچ اور ایڈٹ کے ساتھ)
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({Key? key}) : super(key: key);
 
@@ -240,6 +243,8 @@ class OutletsScreen extends StatefulWidget {
 }
 
 class _OutletsScreenState extends State<OutletsScreen> {
+  String searchQuery = '';
+
   void _openOutletDialog({Map<String, dynamic>? outlet, int? index}) {
     final nameController = TextEditingController(text: outlet?['name'] ?? '');
     final ownerController = TextEditingController(text: outlet?['owner'] ?? '');
@@ -259,12 +264,12 @@ class _OutletsScreenState extends State<OutletsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'دکان کا نام')),
-                TextField(controller: ownerController, decoration: const InputDecoration(labelText: 'دکاندار کا نام')),
+                TextField(controller: nameController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'دکان کا نام')),
+                TextField(controller: ownerController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'دکاندار کا نام')),
                 TextField(controller: phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'موبائل نمبر')),
-                TextField(controller: areaController, decoration: const InputDecoration(labelText: 'ایریا (Area)')),
-                TextField(controller: streetController, decoration: const InputDecoration(labelText: 'اسٹریٹ / گلی')),
-                TextField(controller: cityController, decoration: const InputDecoration(labelText: 'شہر (City)')),
+                TextField(controller: areaController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'ایریا (Area)')),
+                TextField(controller: streetController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'اسٹریٹ / گلی')),
+                TextField(controller: cityController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'شہر (City)')),
               ],
             ),
           ),
@@ -302,45 +307,76 @@ class _OutletsScreenState extends State<OutletsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // سرچ اور الفابیٹیکل ترتیب
+    var filteredOutlets = AppData.globalOutlets.where((o) {
+      final name = o['name'].toLowerCase();
+      final owner = o['owner'].toLowerCase();
+      final query = searchQuery.toLowerCase();
+      return name.contains(query) || owner.contains(query);
+    }).toList();
+
+    filteredOutlets.sort((a, b) => a['name'].compareTo(b['name']));
+
     return Scaffold(
-      body: ListView.builder(
-        padding: const EdgeInsets.all(8.0),
-        itemCount: AppData.globalOutlets.length,
-        itemBuilder: (context, index) {
-          final outlet = AppData.globalOutlets[index];
-          return Card(
-            elevation: 2,
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            child: ListTile(
-              title: Text(outlet['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('مالک: ${outlet['owner']} | فون: ${outlet['phone']}\nایریا: ${outlet['area']}, گلی: ${outlet['street']}, شہر: ${outlet['city']}'),
-              isThreeLine: true,
-              // دکان پر کلک کرنے سے یا ایڈٹ بٹن سے ایڈٹ فارم کھل جائے گا
-              onTap: () => _openOutletDialog(outlet: outlet, index: index),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blue),
-                    onPressed: () => _openOutletDialog(outlet: outlet, index: index),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => OutletOrderScreen(outletName: outlet['name']),
-                        ),
-                      );
-                    },
-                    child: const Text('آرڈر لیں'),
-                  ),
-                ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                labelText: 'دکان یا دکاندار کے نام سے تلاش کریں...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+                isDense: true,
               ),
+              onChanged: (val) {
+                setState(() {
+                  searchQuery = val;
+                });
+              },
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: filteredOutlets.length,
+              itemBuilder: (context, index) {
+                final outlet = filteredOutlets[index];
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: ListTile(
+                    title: Text(outlet['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('مالک: ${outlet['owner']} | فون: ${outlet['phone']}\nایریا: ${outlet['area']}, گلی: ${outlet['street']}, شہر: ${outlet['city']}'),
+                    isThreeLine: true,
+                    onTap: () => _openOutletDialog(outlet: outlet, index: AppData.globalOutlets.indexOf(outlet)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => _openOutletDialog(outlet: outlet, index: AppData.globalOutlets.indexOf(outlet)),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => OutletOrderScreen(outletName: outlet['name']),
+                              ),
+                            );
+                          },
+                          child: const Text('آرڈر لیں'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF004080),
@@ -351,7 +387,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
   }
 }
 
-// 2. دکان کا آرڈر لینے والا صفحہ
+// 2. دکان کا آرڈر لینے والا صفحہ (محفوظ کرنے کے بٹن کے ساتھ)
 class OutletOrderScreen extends StatefulWidget {
   final String outletName;
   const OutletOrderScreen({Key? key, required this.outletName}) : super(key: key);
@@ -398,6 +434,42 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
     return total;
   }
 
+  void _saveOrder() {
+    List<Map<String, dynamic>> orderedItems = [];
+    for (int i = 0; i < AppData.globalProducts.length; i++) {
+      double cottonQty = double.tryParse(_controllers[i]?['cotton']?.text ?? '0') ?? 0.0;
+      double packetQty = double.tryParse(_controllers[i]?['packet']?.text ?? '0') ?? 0.0;
+
+      if (cottonQty > 0 || packetQty > 0) {
+        final p = AppData.globalProducts[i];
+        orderedItems.add({
+          'title': p['title'],
+          'size': p['size'],
+          'cotton': cottonQty,
+          'packet': packetQty,
+          'total': (cottonQty * p['cottonRate']) + (packetQty * p['packetRate']),
+        });
+      }
+    }
+
+    if (orderedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('براہ کرم کم از کم ایک پروڈکٹ کی مقدار درج کریں')));
+      return;
+    }
+
+    setState(() {
+      AppData.savedOrders.add({
+        'outletName': widget.outletName,
+        'date': DateTime.now().toString().substring(0, 16),
+        'items': orderedItems,
+        'grandTotal': _calculateTotalAmount(),
+      });
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('آرڈر کامیابی سے محفوظ ہو گیا ہے!')));
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -405,6 +477,13 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
         backgroundColor: const Color(0xFF004080),
         title: Text('آرڈر: ${widget.outletName}', style: const TextStyle(color: Colors.white, fontSize: 15)),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check, color: Colors.white),
+            onPressed: _saveOrder,
+            tooltip: 'آرڈر محفوظ کریں',
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -516,11 +595,77 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(vertical: 12)),
+          onPressed: _saveOrder,
+          child: const Text('آرڈر محفوظ کریں', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
+      ),
     );
   }
 }
 
-// 3. پروڈکٹس سکرین (ایڈٹ آپشن کے ساتھ)
+// 3. سیل آرڈرز اور ٹوڈے سمری سکرین
+class SaleOrdersScreen extends StatelessWidget {
+  const SaleOrdersScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: AppData.savedOrders.isEmpty
+          ? const Center(child: Text('آج کا کوئی آرڈر محفوظ نہیں کیا گیا', style: TextStyle(fontSize: 16, color: Colors.grey)))
+          : ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: AppData.savedOrders.length,
+              itemBuilder: (context, index) {
+                final order = AppData.savedOrders[index];
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(order['outletName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF004080))),
+                            Text(order['date'], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
+                        ),
+                        const Divider(),
+                        ...((order['items'] as List).map((item) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('${item['title']} (${item['size']})', style: const TextStyle(fontSize: 12)),
+                                  Text('کاٹن: ${item['cotton']} | پیکٹ: ${item['packet']} (Rs: ${item['total']})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                                ],
+                              ),
+                            ))),
+                        const Divider(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('کل بل:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('Rs: ${order['grandTotal'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+// 4. پروڈکٹس سکرین (سرچ، ایڈٹ اور ڈیلیٹ آپشن کے ساتھ)
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({Key? key}) : super(key: key);
 
@@ -529,6 +674,8 @@ class ProductsScreen extends StatefulWidget {
 }
 
 class _ProductsScreenState extends State<ProductsScreen> {
+  String searchQuery = '';
+
   void _openProductDialog({Map<String, dynamic>? product, int? index}) {
     final titleController = TextEditingController(text: product?['title'] ?? '');
     final sizeController = TextEditingController(text: product?['size'] ?? '');
@@ -550,8 +697,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: titleController, decoration: const InputDecoration(labelText: 'پروڈکٹ کا نام')),
-                TextField(controller: sizeController, decoration: const InputDecoration(labelText: 'سائز (Size) مثلاً 18 Gm * 240')),
+                TextField(controller: titleController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'پروڈکٹ کا نام')),
+                TextField(controller: sizeController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'سائز (Size) مثلاً 18 Gm * 240')),
                 TextField(controller: cottonRateController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'کارٹن ریٹ (Cotton Rate)')),
                 TextField(controller: packetRateController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'پیکٹ ریٹ (Packet Rate)')),
                 TextField(controller: cottonStockController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'کارٹن اسٹاک (Cotton Stock)')),
@@ -595,77 +742,140 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
+  void _deleteProduct(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('تصدیق'),
+        content: const Text('کیا آپ واقعی اس پروڈکٹ کو مستقل طور پر ڈیلیٹ کرنا چاہتے ہیں؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('نہیں')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              setState(() {
+                AppData.globalProducts.removeAt(index);
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('ہاں، ڈیلیٹ کریں', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    var filteredProducts = AppData.globalProducts.where((p) {
+      final title = p['title'].toLowerCase();
+      final size = p['size'].toLowerCase();
+      final query = searchQuery.toLowerCase();
+      return title.contains(query) || size.contains(query);
+    }).toList();
+
+    filteredProducts.sort((a, b) => a['title'].compareTo(b['title']));
+
     return Scaffold(
-      body: ListView.builder(
-        padding: const EdgeInsets.all(8.0),
-        itemCount: AppData.globalProducts.length,
-        itemBuilder: (context, index) {
-          final p = AppData.globalProducts[index];
-          return Card(
-            elevation: 2,
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            child: InkWell(
-              // پروڈکٹ پر کہیں بھی کلک کرنے سے ایڈٹ کھل جائے گا
-              onTap: () => _openProductDialog(product: p, index: index),
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.inventory_2, color: Colors.grey),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                labelText: 'پروڈکٹ کے نام یا سائز سے تلاش کریں...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: (val) {
+                setState(() {
+                  searchQuery = val;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: filteredProducts.length,
+              itemBuilder: (context, index) {
+                final p = filteredProducts[index];
+                final originalIndex = AppData.globalProducts.indexOf(p);
+
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: InkWell(
+                    onTap: () => _openProductDialog(product: p, index: originalIndex),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(child: Text('${p['title']} (${p['size']})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
-                                onPressed: () => _openProductDialog(product: p, index: index),
-                              ),
-                            ],
+                          Container(
+                            width: 50,
+                            height: 50,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.inventory_2, color: Colors.grey),
                           ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Cotton Rate: ${p['cottonRate']}', style: const TextStyle(fontSize: 11)),
-                              Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Cotton Stock: ${p['cottonStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
-                              Text('Packet Stock: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Counter Unit Price: ${p['counterUnitPrice']}', style: const TextStyle(fontSize: 11, color: Colors.black54)),
-                              Text('Retail: ${p['retail']}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
-                            ],
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(child: Text('${p['title']} (${p['size']})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, size: 20, color: Colors.blue),
+                                          onPressed: () => _openProductDialog(product: p, index: originalIndex),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                                          onPressed: () => _deleteProduct(originalIndex),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Cotton Rate: ${p['cottonRate']}', style: const TextStyle(fontSize: 11)),
+                                    Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Cotton Stock: ${p['cottonStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                                    Text('Packet Stock: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Counter Unit Price: ${p['counterUnitPrice']}', style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                                    Text('Retail: ${p['retail']}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF004080),
