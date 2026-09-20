@@ -29,21 +29,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _selectedTitle = 'Home';
+  String _selectedTitle = 'My Outlets';
 
-  // مختلف سکرینز کا مواد دکھانے کے لیے فنکشن
   Widget _getSelectedScreen() {
     switch (_selectedTitle) {
       case 'Home':
         return _buildHomeDashboard();
       case 'My Outlets':
-        return const Center(child: Text('مائی آؤٹ لیٹس (دکانیں)', style: TextStyle(fontSize: 20)));
+        return const OutletsScreen(); // اپ ڈیٹ شدہ آؤٹ لیٹس سکرین
       case 'Planed Outlets':
         return const Center(child: Text('پلانڈ آؤٹ لیٹس', style: TextStyle(fontSize: 20)));
       case 'Routes':
         return const Center(child: Text('روٹس (Routes)', style: TextStyle(fontSize: 20)));
       case 'Products':
-        return const Center(child: Text('پروڈکٹس کی فہرست', style: TextStyle(fontSize: 20)));
+        return const ProductsScreen(); // پروڈکٹس سکرین
       case 'Recoveries':
         return const Center(child: Text('ریکوریز (Recoveries)', style: TextStyle(fontSize: 20)));
       case 'Sale Orders':
@@ -67,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // ہوم ڈیش بورڈ کا منظر
   Widget _buildHomeDashboard() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -99,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004080),
-        // بائیں طرف گلوبل لوگو اور نام
         title: Row(
           children: [
             Container(
@@ -128,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      // دائیں طرف سے کھلنے والا مینو (EndDrawer)
       endDrawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -174,7 +170,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // مینو کے ہر آئٹم کا ڈیزائن
   Widget _drawerItem(IconData icon, String title, {bool isLogout = false}) {
     return ListTile(
       leading: Icon(icon, color: isLogout ? Colors.red : const Color(0xFF004080)),
@@ -186,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       onTap: () {
-        Navigator.pop(context); // مینو بند کریں
+        Navigator.pop(context);
         if (isLogout) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('لاگ آؤٹ ہو گئے ہیں')),
@@ -197,6 +192,197 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       },
+    );
+  }
+}
+
+// 1. آؤٹ لیٹس سکرین (جس میں پلس کا بٹن اور دکان دار کا انفارمیشن فارم ہے)
+class OutletsScreen extends StatefulWidget {
+  const OutletsScreen({Key? key}) : super(key: key);
+
+  @override
+  _OutletsScreenState createState() => _OutletsScreenState();
+}
+
+class _OutletsScreenState extends State<OutletsScreen> {
+  final List<Map<String, dynamic>> _outlets = [
+    {'name': 'المدینہ جنرل سٹور، کراچی', 'owner': 'محمد علی', 'phone': '03001234567'},
+    {'name': 'البحرین سپر مارکیٹ', 'owner': 'احمد رضا', 'phone': '03219876543'},
+  ];
+
+  void _addNewOutletDialog() {
+    final nameController = TextEditingController();
+    final ownerController = TextEditingController();
+    final phoneController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('نئی دکان (آؤٹ لیٹ) شامل کریں'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'دکان کا نام')),
+                TextField(controller: ownerController, decoration: const InputDecoration(labelText: 'دکان دار کا نام')),
+                TextField(controller: phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'موبائل نمبر')),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('منسوخ'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
+              onPressed: () {
+                if (nameController.text.isNotEmpty) {
+                  setState(() {
+                    _outlets.add({
+                      'name': nameController.text,
+                      'owner': ownerController.text,
+                      'phone': phoneController.text,
+                    });
+                  });
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('محفوظ کریں', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: _outlets.length,
+        itemBuilder: (context, index) {
+          final outlet = _outlets[index];
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: ListTile(
+              title: Text(outlet['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('مالک: ${outlet['owner']} | فون: ${outlet['phone']}'),
+              trailing: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                onPressed: () {
+                  // دکان سلیکٹ کرنے پر پروڈکٹ/آرڈر پیج کھل جائے گا
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OutletOrderScreen(outletName: outlet['name']),
+                    ),
+                  );
+                },
+                child: const Text('آرڈر لیں'),
+              ),
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF004080),
+        onPressed: _addNewOutletDialog,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+}
+
+// 2. دکان کا آرڈر اور پروڈکٹ سکرین (جو پچھلے سٹیپ میں بنائی گئی تھی)
+class OutletOrderScreen extends StatelessWidget {
+  final String outletName;
+  const OutletOrderScreen({Key? key, required this.outletName}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Map<String, dynamic>> products = [
+      {'title': '10760 Vista Detergent Powder 18 Gm*240 (Rs:10)', 'cottonRate': 2244.0, 'packetRate': 9.35, 'cottonStock': 9.0, 'packetStock': 108.0, 'retail': 10.0},
+      {'title': '10761 Vista Detergent Powder 85 Gm*66 (Rs:50)', 'cottonRate': 3036.0, 'packetRate': 46.0, 'cottonStock': 27.0, 'packetStock': 24.0, 'retail': 50.0},
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF004080),
+        title: Text('آرڈر: $outletName', style: const TextStyle(color: Colors.white, fontSize: 16)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          final p = products[index];
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.inventory_2, color: Colors.grey),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(p['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Cotton Rate: ${p['cottonRate']}', style: const TextStyle(fontSize: 11)),
+                            Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Cotton Stock: ${p['cottonStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                            Text('Packet Stock: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Counter Unit Price: 0.0', style: TextStyle(fontSize: 11, color: Colors.black54)),
+                            Text('Retail: ${p['retail']}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// 3. مرکزی پروڈکٹس سکرین (مین مینو کے لیے)
+class ProductsScreen extends StatelessWidget {
+  const ProductsScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text('پروڈکٹس مینجمنٹ سکرین', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
     );
   }
 }
