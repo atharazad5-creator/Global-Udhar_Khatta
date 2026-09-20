@@ -29,36 +29,69 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  String _selectedTitle = 'Home';
 
-  final List<Map<String, dynamic>> _outlets = [
-    {'id': 1, 'name': 'المدینہ جنرل سٹور، کراچی'},
-    {'id': 2, 'name': 'البحرین سپر مارکیٹ'},
-    {'id': 3, 'name': 'الفضل ٹریڈرز اینڈ جنرل سٹور'},
-    {'id': 4, 'name': 'الرحیم کریانہ سٹور'},
-    {'id': 5, 'name': 'نبی بخش اینڈ سنز'},
-  ];
-
-  List<Map<String, dynamic>> _filteredOutlets = [];
-  final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _filteredOutlets = _outlets;
+  // مختلف سکرینز کا مواد دکھانے کے لیے فنكشن
+  Widget _getSelectedScreen() {
+    switch (_selectedTitle) {
+      case 'Home':
+        return _buildHomeDashboard();
+      case 'My Outlets':
+        return const Center(child: Text('مائی آؤٹ لیٹس (دکانیں)', style: TextStyle(fontSize: 20)));
+      case 'Planed Outlets':
+        return const Center(child: Text('پلانڈ آؤٹ لیٹس', style: TextStyle(fontSize: 20)));
+      case 'Routes':
+        return const Center(child: Text('روٹس (Routes)', style: TextStyle(fontSize: 20)));
+      case 'Products':
+        return const Center(child: Text('پروڈکٹس کی فہرست', style: TextStyle(fontSize: 20)));
+      case 'Recoveries':
+        return const Center(child: Text('ریکوریز (Recoveries)', style: TextStyle(fontSize: 20)));
+      case 'Sale Orders':
+        return const Center(child: Text('سیل آرڈرز', style: TextStyle(fontSize: 20)));
+      case 'Map View':
+        return const Center(child: Text('نقشہ (Map View)', style: TextStyle(fontSize: 20)));
+      case 'Today Activity Remarks':
+        return const Center(child: Text('آج کی سرگرمی اور ریمارکس', style: TextStyle(fontSize: 20)));
+      case 'Sale Targets':
+        return const Center(child: Text('سیل ٹارگٹس', style: TextStyle(fontSize: 20)));
+      case 'Sync Data':
+        return const Center(child: Text('ڈیٹا سنک کریں', style: TextStyle(fontSize: 20)));
+      case 'Configuration':
+        return const Center(child: Text('کنفیگریشن سیٹنگز', style: TextStyle(fontSize: 20)));
+      case 'Switch User':
+        return const Center(child: Text('یوزر تبدیل کریں', style: TextStyle(fontSize: 20)));
+      case 'Visit Log':
+        return const Center(child: Text('وزٹ لاگ', style: TextStyle(fontSize: 20)));
+      default:
+        return _buildHomeDashboard();
+    }
   }
 
-  void _filterOutlets(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredOutlets = _outlets;
-      } else {
-        _filteredOutlets = _outlets
-            .where((outlet) =>
-                outlet['name'].toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-    });
+  // ہوم ڈیش بورڈ کا منظر
+  Widget _buildHomeDashboard() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ListView(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.blue[100]!),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text('خوش آمدید!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF004080))),
+                SizedBox(height: 8),
+                Text('گلوبل ڈیجیٹل کھاتہ سسٹم میں آپ کا خیرمقدم ہے۔ مینو سے مطلوبہ آپشن منتخب کریں۔', style: TextStyle(fontSize: 14)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -66,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004080),
-        // بائیں طرف لوگو اور نام
+        // بائیں طرف گلوبل لوگو اور نام
         title: Row(
           children: [
             Container(
@@ -79,256 +112,96 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Center(
                 child: Text(
                   'G',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            const Text(
-              'گلوبل ڈیجیٹل کھاتہ',
-              style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        // دائیں طرف مینو آپشنز/آئکنز
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.store, color: Colors.white),
-            tooltip: 'مائی آؤٹ لیٹس',
-            onPressed: () {
-              setState(() {
-                _currentIndex = 0;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.account_balance_wallet, color: Colors.white),
-            tooltip: 'ڈیجیٹل کھاتہ',
-            onPressed: () {
-              setState(() {
-                _currentIndex = 1;
-              });
-            },
-          ),
-        ],
-      ),
-      body: _currentIndex == 0 ? _buildOutletsTab() : const LedgerTab(),
-    );
-  }
-
-  Widget _buildOutletsTab() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'مائی آؤٹ لیٹس (دکانیں)',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF004080)),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _searchController,
-            onChanged: _filterOutlets,
-            decoration: InputDecoration(
-              hintText: '🔍 دکان کا نام تلاش کریں...',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
-            ),
-          ),
-          const SizedBox(height: 15),
-          Expanded(
-            child: _filteredOutlets.isEmpty
-                ? const Center(child: Text('کوئی دکان نہیں ملی'))
-                : ListView.builder(
-                    itemCount: _filteredOutlets.length,
-                    itemBuilder: (context, index) {
-                      final outlet = _filteredOutlets[index];
-                      return Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: ListTile(
-                          title: Text(
-                            outlet['name'],
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          trailing: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => OrderPunchScreen(outletName: outlet['name']),
-                                ),
-                              );
-                            },
-                            child: const Text('آرڈر پنچ کریں'),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class OrderPunchScreen extends StatefulWidget {
-  final String outletName;
-  const OrderPunchScreen({Key? key, required this.outletName}) : super(key: key);
-
-  @override
-  _OrderPunchScreenState createState() => _OrderPunchScreenState();
-}
-
-class _OrderPunchScreenState extends State<OrderPunchScreen> {
-  final TextEditingController _itemController = TextEditingController();
-  final TextEditingController _qtyController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController();
-
-  void _submitOrder() {
-    if (_itemController.text.isEmpty || _qtyController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('براہ کرم آئٹم اور مقدار درج کریں!')),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('"${widget.outletName}" کے لیے آرڈر کامیابی سے پنچ ہو گیا!')),
-    );
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF004080),
-        title: const Text('آرڈر پنچ کریں', style: TextStyle(color: Colors.white)),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'دکان: ${widget.outletName}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF004080)),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _itemController,
-              decoration: const InputDecoration(
-                labelText: 'آئٹم کا نام / پروڈکٹ',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: _qtyController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'مقدار (Quantity)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'کل رقم (Rs)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 25),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF004080),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: _submitOrder,
-                child: const Text('آرڈر سبمٹ کریں', style: TextStyle(fontSize: 16)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class LedgerTab extends StatelessWidget {
-  const LedgerTab({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'گلوبل ڈیجیٹل کھاتہ (لیجر)',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF004080)),
-          ),
-          const SizedBox(height: 15),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue[100]!),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text('کل بقایاجات:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('Rs. 12,500', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                Text('Athar Ali', style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold)),
+                Text('Your Business', style: TextStyle(fontSize: 10, color: Colors.white70)),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
-          const Text('نیا لین دین شامل کریں:', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          const TextField(
-            decoration: InputDecoration(
-              labelText: 'گاہک / آؤٹ لیٹ کا نام',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const TextField(
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'رقم (Rs)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 15),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF9900)),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('کھاتہ کامیابی سے اپ ڈیٹ ہو گیا!')),
-              );
-            },
-            child: const Text('محفوظ کریں', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+          ],
+        ),
+        // دائیں طرف مینو کھولنے کے لیے بٹن (EndDrawer کھلنے کا خودکار ہینڈل)
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
+      // دائیں طرف سے کھلنے والا مینو (EndDrawer)
+      endDrawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: Color(0xFF004080),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: const [
+                  CircleAvatar(
+                    backgroundColor: Color(0xFFFF9900),
+                    child: Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                  SizedBox(height: 10),
+                  Text('Athar Ali', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text('Your Business', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                ],
+              ),
+            ),
+            _drawerItem(Icons.home, 'Home'),
+            _drawerItem(Icons.store, 'My Outlets'),
+            _drawerItem(Icons.bookmark_border, 'Planed Outlets'),
+            _drawerItem(Icons.alt_route, 'Routes'),
+            _drawerItem(Icons.shopping_bag_outlined, 'Products'),
+            _drawerItem(Icons.credit_card, 'Recoveries'),
+            _drawerItem(Icons.local_shipping_outlined, 'Sale Orders'),
+            _drawerItem(Icons.location_on_outlined, 'Map View'),
+            _drawerItem(Icons.note_alt_outlined, 'Today Activity Remarks'),
+            _drawerItem(Icons.science_outlined, 'Sale Targets'),
+            _drawerItem(Icons.cloud_sync_outlined, 'Sync Data'),
+            _drawerItem(Icons.settings, 'Configuration'),
+            _drawerItem(Icons.person_outline, 'Switch User'),
+            _drawerItem(Icons.receipt_long, 'Visit Log'),
+            const Divider(),
+            _drawerItem(Icons.logout, 'Log out', isLogout: true),
+          ],
+        ),
+      ),
+      body: _getSelectedScreen(),
+    );
+  }
+
+  // مینو کے ہر آئٹم کا ڈیزائن
+  Widget IconData(IconData icon, String title) {
+    return const Icon(Icons.home);
+  }
+
+  Widget _drawerItem(IconData icon, String title, {bool isLogout = false}) {
+    return ListTile(
+      leading: Icon(icon, color: isLogout ? Colors.red : const Color(0xFF004080)),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          color: isLogout ? Colors.red : Colors.black87,
+        ),
+      ),
+      onTap: () {
+        Navigator.pop(context); // مینو بند کریں
+        if (isLogout) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('لاگ آؤٹ ہو گئے ہیں')),
+          );
+        } else {
+          setState(() {
+            _selectedTitle = title;
+          });
+        }
+      },
     );
   }
 }
