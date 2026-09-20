@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const GlobalApp());
@@ -11,7 +10,7 @@ class GlobalApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'گلوبل ڈیجیٹل کھاتہ',
+      title: 'Global Digital Khata',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -38,30 +37,30 @@ class _HomeScreenState extends State<HomeScreen> {
         return _buildHomeDashboard();
       case 'My Outlets':
         return const OutletsScreen();
-      case 'Planed Outlets':
-        return const Center(child: Text('پلانڈ آؤٹ لیٹس', style: TextStyle(fontSize: 20)));
+      case 'Stock':
+        return const ProductsScreen();
       case 'Routes':
-        return const Center(child: Text('روٹس (Routes)', style: TextStyle(fontSize: 20)));
+        return const Center(child: Text('Routes', style: TextStyle(fontSize: 20)));
       case 'Products':
         return const ProductsScreen();
       case 'Recoveries':
-        return const Center(child: Text('ریکوریز (Recoveries)', style: TextStyle(fontSize: 20)));
+        return const RecoveriesScreen();
       case 'Sale Orders':
         return const SaleOrdersScreen();
       case 'Map View':
-        return const Center(child: Text('نقشہ (Map View)', style: TextStyle(fontSize: 20)));
+        return const Center(child: Text('Map View', style: TextStyle(fontSize: 20)));
       case 'Today Activity Remarks':
         return const SaleOrdersScreen();
       case 'Sale Targets':
-        return const Center(child: Text('سیل ٹارگٹس', style: TextStyle(fontSize: 20)));
+        return const Center(child: Text('Sale Targets', style: TextStyle(fontSize: 20)));
       case 'Sync Data':
-        return const Center(child: Text('ڈیٹا سنک کریں', style: TextStyle(fontSize: 20)));
+        return const Center(child: Text('Sync Data', style: TextStyle(fontSize: 20)));
       case 'Configuration':
-        return const Center(child: Text('کنفیگریشن سیٹنگز', style: TextStyle(fontSize: 20)));
+        return const Center(child: Text('Configuration', style: TextStyle(fontSize: 20)));
       case 'Switch User':
-        return const Center(child: Text('یوزر تبدیل کریں', style: TextStyle(fontSize: 20)));
+        return const Center(child: Text('Switch User', style: TextStyle(fontSize: 20)));
       case 'Visit Log':
-        return const Center(child: Text('وزٹ لاگ', style: TextStyle(fontSize: 20)));
+        return const Center(child: Text('Visit Log', style: TextStyle(fontSize: 20)));
       default:
         return _buildHomeDashboard();
     }
@@ -82,9 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text('خوش آمدید!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF004080))),
+                Text('Welcome Back!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF004080))),
                 SizedBox(height: 8),
-                Text('گلوبل ڈیجیٹل کھاتہ سسٹم میں آپ کا خیرمقدم ہے۔ مینو سے مطلوبہ آپشن منتخب کریں۔', style: TextStyle(fontSize: 14)),
+                Text('Welcome to Global Digital Khata system. Select an option from the menu.', style: TextStyle(fontSize: 14)),
               ],
             ),
           ),
@@ -145,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             _drawerItem(Icons.home, 'Home'),
             _drawerItem(Icons.store, 'My Outlets'),
-            _drawerItem(Icons.bookmark_border, 'Planed Outlets'),
+            _drawerItem(Icons.inventory, 'Stock'),
             _drawerItem(Icons.alt_route, 'Routes'),
             _drawerItem(Icons.shopping_bag_outlined, 'Products'),
             _drawerItem(Icons.credit_card, 'Recoveries'),
@@ -176,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         Navigator.pop(context);
         if (isLogout) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لاگ آؤٹ ہو گئے ہیں')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logged out successfully')));
         } else {
           setState(() {
             _selectedTitle = title;
@@ -187,24 +186,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// گلوبل ڈیٹا اسٹوریج
+// Global App Data Storage
 class AppData {
   static final List<Map<String, dynamic>> globalOutlets = [
     {
-      'name': 'المدینہ جنرل سٹور',
-      'owner': 'محمد علی',
+      'name': 'Al-Madina General Store',
+      'owner': 'Muhammad Ali',
       'phone': '03001234567',
-      'area': 'صدر',
-      'street': 'گلی نمبر 3',
-      'city': 'کراچی'
+      'area': 'Saddar',
+      'street': 'Street 3',
+      'city': 'Karachi',
+      'balance': 5000.0
     },
     {
-      'name': 'البحرین سپر مارکیٹ',
-      'owner': 'احمد رضا',
+      'name': 'Bahrain Supermarket',
+      'owner': 'Ahmed Raza',
       'phone': '03219876543',
-      'area': 'لیاقت آباد',
-      'street': 'مین بازار',
-      'city': 'کراچی'
+      'area': 'Liaquatabad',
+      'street': 'Main Bazaar',
+      'city': 'Karachi',
+      'balance': 12000.0
     },
   ];
 
@@ -212,9 +213,9 @@ class AppData {
     {
       'title': 'Vista Detergent Powder',
       'size': '18 Gm * 240',
-      'cottonRate': 2244.0,
+      'cartonRate': 2244.0,
       'packetRate': 9.35,
-      'cottonStock': 50.0,
+      'cartonStock': 50.0,
       'packetStock': 108.0,
       'counterUnitPrice': 0.0,
       'retail': 10.0,
@@ -222,9 +223,9 @@ class AppData {
     {
       'title': 'Vista Detergent Powder',
       'size': '85 Gm * 66',
-      'cottonRate': 3036.0,
+      'cartonRate': 3036.0,
       'packetRate': 46.0,
-      'cottonStock': 40.0,
+      'cartonStock': 40.0,
       'packetStock': 24.0,
       'counterUnitPrice': 0.0,
       'retail': 50.0,
@@ -234,7 +235,7 @@ class AppData {
   static final List<Map<String, dynamic>> savedOrders = [];
 }
 
-// آؤٹ لیٹس سکرین
+// Outlets Screen
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({Key? key}) : super(key: key);
 
@@ -252,6 +253,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
     final areaController = TextEditingController(text: outlet?['area'] ?? '');
     final streetController = TextEditingController(text: outlet?['street'] ?? '');
     final cityController = TextEditingController(text: outlet?['city'] ?? '');
+    final balanceController = TextEditingController(text: outlet?['balance']?.toString() ?? '0.0');
 
     bool isEditing = outlet != null;
 
@@ -259,22 +261,23 @@ class _OutletsScreenState extends State<OutletsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(isEditing ? 'دکان کی تفصیلات میں ترمیم کریں' : 'نئی دکان (آؤٹ لیٹ) شامل کریں'),
+          title: Text(isEditing ? 'Edit Outlet Details' : 'Add New Outlet'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: nameController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'دکان کا نام')),
-                TextField(controller: ownerController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'دکاندار کا نام')),
-                TextField(controller: phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'موبائل نمبر')),
-                TextField(controller: areaController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'ایریا (Area)')),
-                TextField(controller: streetController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'اسٹریٹ / گلی')),
-                TextField(controller: cityController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'شہر (City)')),
+                TextField(controller: nameController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Outlet Name')),
+                TextField(controller: ownerController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Shopkeeper Name')),
+                TextField(controller: phoneController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Mobile Number')),
+                TextField(controller: areaController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Area')),
+                TextField(controller: streetController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Street / Gali')),
+                TextField(controller: cityController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'City')),
+                TextField(controller: balanceController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Initial Balance / Dues')),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('منسوخ')),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
               onPressed: () {
@@ -287,6 +290,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                       'area': areaController.text,
                       'street': streetController.text,
                       'city': cityController.text,
+                      'balance': double.tryParse(balanceController.text) ?? 0.0,
                     };
                     if (isEditing && index != null) {
                       AppData.globalOutlets[index] = newOutletData;
@@ -297,7 +301,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                   Navigator.pop(context);
                 }
               },
-              child: Text(isEditing ? 'اپ ڈیٹ کریں' : 'محفوظ کریں', style: const TextStyle(color: Colors.white)),
+              child: Text(isEditing ? 'Update' : 'Save', style: const TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -323,7 +327,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               decoration: const InputDecoration(
-                labelText: 'دکان یا دکاندار کے نام سے تلاش کریں...',
+                labelText: 'Search by outlet or shopkeeper name...',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
                 isDense: true,
@@ -346,7 +350,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: ListTile(
                     title: Text(outlet['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('مالک: ${outlet['owner']} | فون: ${outlet['phone']}\nایریا: ${outlet['area']}, گلی: ${outlet['street']}, شہر: ${outlet['city']}'),
+                    subtitle: Text('Owner: ${outlet['owner']} | Phone: ${outlet['phone']}\nArea: ${outlet['area']}, Street: ${outlet['street']}, City: ${outlet['city']}\nBalance: Rs ${outlet['balance']}'),
                     isThreeLine: true,
                     onTap: () => _openOutletDialog(outlet: outlet, index: AppData.globalOutlets.indexOf(outlet)),
                     trailing: Row(
@@ -366,7 +370,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
                               ),
                             );
                           },
-                          child: const Text('آرڈر لیں'),
+                          child: const Text('Take Order'),
                         ),
                       ],
                     ),
@@ -386,7 +390,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
   }
 }
 
-// دکان کا آرڈر لینے والا صفحہ (جس سے اسٹاک بھی مائنس ہوگا)
+// Outlet Order Screen with stock deduction
 class OutletOrderScreen extends StatefulWidget {
   final String outletName;
   final Map<String, dynamic>? existingOrder;
@@ -405,7 +409,7 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
   void initState() {
     super.initState();
     for (int i = 0; i < AppData.globalProducts.length; i++) {
-      String initialCotton = '0';
+      String initialCarton = '0';
       String initialPacket = '0';
 
       if (widget.existingOrder != null) {
@@ -414,14 +418,14 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
         final pSize = AppData.globalProducts[i]['size'];
         for (var item in items) {
           if (item['title'] == pName && item['size'] == pSize) {
-            initialCotton = item['cotton'].toString();
+            initialCarton = item['carton'].toString();
             initialPacket = item['packet'].toString();
           }
         }
       }
 
       _controllers[i] = {
-        'cotton': TextEditingController(text: initialCotton),
+        'carton': TextEditingController(text: initialCarton),
         'packet': TextEditingController(text: initialPacket),
       };
     }
@@ -430,7 +434,7 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
   @override
   void dispose() {
     for (var entry in _controllers.values) {
-      entry['cotton']?.dispose();
+      entry['carton']?.dispose();
       entry['packet']?.dispose();
     }
     super.dispose();
@@ -440,13 +444,13 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
     double total = 0.0;
     for (int i = 0; i < AppData.globalProducts.length; i++) {
       final p = AppData.globalProducts[i];
-      double cottonQty = double.tryParse(_controllers[i]?['cotton']?.text ?? '0') ?? 0.0;
+      double cartonQty = double.tryParse(_controllers[i]?['carton']?.text ?? '0') ?? 0.0;
       double packetQty = double.tryParse(_controllers[i]?['packet']?.text ?? '0') ?? 0.0;
       
-      double cottonRate = p['cottonRate'] ?? 0.0;
+      double cartonRate = p['cartonRate'] ?? 0.0;
       double packetRate = p['packetRate'] ?? 0.0;
 
-      total += (cottonQty * cottonRate) + (packetQty * packetRate);
+      total += (cartonQty * cartonRate) + (packetQty * packetRate);
     }
     return total;
   }
@@ -454,29 +458,46 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
   void _saveOrder() {
     List<Map<String, dynamic>> orderedItems = [];
     for (int i = 0; i < AppData.globalProducts.length; i++) {
-      double cottonQty = double.tryParse(_controllers[i]?['cotton']?.text ?? '0') ?? 0.0;
+      double cartonQty = double.tryParse(_controllers[i]?['carton']?.text ?? '0') ?? 0.0;
       double packetQty = double.tryParse(_controllers[i]?['packet']?.text ?? '0') ?? 0.0;
 
-      if (cottonQty > 0 || packetQty > 0) {
+      if (widget.existingOrder != null) {
+        final oldItems = widget.existingOrder!['items'] as List;
+        final pName = AppData.globalProducts[i]['title'];
+        final pSize = AppData.globalProducts[i]['size'];
+        for (var item in oldItems) {
+          if (item['title'] == pName && item['size'] == pSize) {
+            AppData.globalProducts[i]['cartonStock'] += (item['carton'] as num).toDouble();
+            AppData.globalProducts[i]['packetStock'] += (item['packet'] as num).toDouble();
+          }
+        }
+      }
+
+      if (cartonQty > 0 || packetQty > 0) {
         final p = AppData.globalProducts[i];
+        
+        if ((p['cartonStock'] ?? 0.0) < cartonQty || (p['packetStock'] ?? 0.0) < packetQty) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Insufficient stock for ${p['title']}!')));
+          return;
+        }
+
         orderedItems.add({
           'title': p['title'],
           'size': p['size'],
-          'cotton': cottonQty,
+          'carton': cartonQty,
           'packet': packetQty,
-          'total': (cottonQty * p['cottonRate']) + (packetQty * p['packetRate']),
+          'total': (cartonQty * p['cartonRate']) + (packetQty * p['packetRate']),
         });
 
-        // اسٹاک میں سے مقدار مائنس کریں
         setState(() {
-          p['cottonStock'] = (p['cottonStock'] ?? 0.0) - cottonQty;
+          p['cartonStock'] = (p['cartonStock'] ?? 0.0) - cartonQty;
           p['packetStock'] = (p['packetStock'] ?? 0.0) - packetQty;
         });
       }
     }
 
     if (orderedItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('براہ کرم کم از کم ایک پروڈکٹ کی مقدار درج کریں')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter quantity for at least one product')));
       return;
     }
 
@@ -493,9 +514,19 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
       } else {
         AppData.savedOrders.add(newOrderData);
       }
+
+      for (var outlet in AppData.globalOutlets) {
+        if (outlet['name'] == widget.outletName) {
+          if (widget.existingOrder != null) {
+            outlet['balance'] = (outlet['balance'] ?? 0.0) - (widget.existingOrder!['grandTotal'] ?? 0.0) + _calculateTotalAmount();
+          } else {
+            outlet['balance'] = (outlet['balance'] ?? 0.0) + _calculateTotalAmount();
+          }
+        }
+      }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('آرڈر کامیابی سے محفوظ ہو گیا ہے اور اسٹاک اپ ڈیٹ ہو گیا ہے!')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order saved successfully and stock updated!')));
     Navigator.pop(context);
   }
 
@@ -504,13 +535,13 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF004080),
-        title: Text(widget.existingOrder != null ? 'ترمیم آرڈر: ${widget.outletName}' : 'آرڈر: ${widget.outletName}', style: const TextStyle(color: Colors.white, fontSize: 15)),
+        title: Text(widget.existingOrder != null ? 'Edit Order: ${widget.outletName}' : 'Order: ${widget.outletName}', style: const TextStyle(color: Colors.white, fontSize: 15)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.check, color: Colors.white),
             onPressed: _saveOrder,
-            tooltip: 'آرڈر محفوظ کریں',
+            tooltip: 'Save Order',
           ),
         ],
       ),
@@ -522,7 +553,7 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
               itemCount: AppData.globalProducts.length,
               itemBuilder: (context, index) {
                 final p = AppData.globalProducts[index];
-                final cottonController = _controllers[index]!['cotton']!;
+                final cartonController = _controllers[index]!['carton']!;
                 final packetController = _controllers[index]!['packet']!;
 
                 return Card(
@@ -552,14 +583,14 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text('Cotton Rate: ${p['cottonRate']}', style: const TextStyle(fontSize: 11)),
+                                      Text('Carton Rate: ${p['cartonRate']}', style: const TextStyle(fontSize: 11)),
                                       Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
                                     ],
                                   ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text('Available Stock: C: ${p['cottonStock']} | P: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.blue)),
+                                      Text('Available Stock: C: ${p['cartonStock']} | P: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.blue)),
                                       Text('Retail: ${p['retail']}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
@@ -573,10 +604,10 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
                           children: [
                             Expanded(
                               child: TextField(
-                                controller: cottonController,
+                                controller: cartonController,
                                 keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
-                                  labelText: 'آرڈر کاٹن (Qty)',
+                                  labelText: 'Order Carton (Qty)',
                                   isDense: true,
                                   border: OutlineInputBorder(),
                                 ),
@@ -591,7 +622,7 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
                                 controller: packetController,
                                 keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
-                                  labelText: 'آرڈر پیکٹ (Qty)',
+                                  labelText: 'Order Packet (Qty)',
                                   isDense: true,
                                   border: OutlineInputBorder(),
                                 ),
@@ -615,7 +646,7 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('کل بل رقم (Total Payment):', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF004080))),
+                const Text('Total Bill Amount:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF004080))),
                 Text(
                   'Rs: ${_calculateTotalAmount().toStringAsFixed(2)}',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green),
@@ -630,14 +661,92 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(vertical: 12)),
           onPressed: _saveOrder,
-          child: const Text('آرڈر محفوظ کریں', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+          child: const Text('Save Order', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ),
     );
   }
 }
 
-// سیل آرڈرز اور ٹوڈے سمری سکرین (تھری ڈاٹس مینو اور ایڈٹ کے ساتھ)
+// Recoveries Screen
+class RecoveriesScreen extends StatefulWidget {
+  const RecoveriesScreen({Key? key}) : super(key: key);
+
+  @override
+  _RecoveriesScreenState createState() => _RecoveriesScreenState();
+}
+
+class _RecoveriesScreenState extends State<RecoveriesScreen> {
+  void _openRecoveryDialog(Map<String, dynamic> outlet) {
+    final paidController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Recovery & Payment: ${outlet['name']}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Current Balance / Dues: Rs ${outlet['balance']}'),
+              const SizedBox(height: 10),
+              TextField(
+                controller: paidController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Amount Paid Today'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              onPressed: () {
+                double paidAmount = double.tryParse(paidController.text) ?? 0.0;
+                setState(() {
+                  outlet['balance'] = (outlet['balance'] ?? 0.0) - paidAmount;
+                });
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Recovery recorded successfully!')));
+              },
+              child: const Text('Save & Update Balance', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: AppData.globalOutlets.length,
+        itemBuilder: (context, index) {
+          final outlet = AppData.globalOutlets[index];
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: ListTile(
+              title: Text(outlet['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('Owner: ${outlet['owner']} | Phone: ${outlet['phone']}\nRemaining Balance: Rs ${outlet['balance']}'),
+              isThreeLine: true,
+              trailing: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
+                onPressed: () => _openRecoveryDialog(outlet),
+                child: const Text('Add Recovery'),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// Sale Orders Screen (Card Click Action instead of Three Dots)
 class SaleOrdersScreen extends StatefulWidget {
   const SaleOrdersScreen({Key? key}) : super(key: key);
 
@@ -646,37 +755,59 @@ class SaleOrdersScreen extends StatefulWidget {
 }
 
 class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
-  void _handleMenuAction(String action, Map<String, dynamic> order, int index) {
-    if (action == 'edit') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OutletOrderScreen(
-            outletName: order['outletName'],
-            existingOrder: order,
-            orderIndex: index,
-          ),
+  void _showOrderActionDialog(BuildContext context, Map<String, dynamic> order, int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Options for ${order['outletName']}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: Colors.blue),
+              title: const Text('Edit Order'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => OutletOrderScreen(
+                      outletName: order['outletName'],
+                      existingOrder: order,
+                      orderIndex: index,
+                    ),
+                  ),
+                ).then((_) => setState(() {}));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.payment, color: Colors.green),
+              title: const Text('Payment Reminder'),
+              onTap: () {
+                Navigator.pop(context);
+                _showReminderDialog(context, 'Payment Reminder', 'Dear shopkeeper, your total bill amount Rs: ${order['grandTotal']} is pending. Please clear the dues.');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.receipt, color: Colors.orange),
+              title: const Text('View Invoice'),
+              onTap: () {
+                Navigator.pop(context);
+                _showInvoiceDialog(context, order);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.refresh, color: Colors.purple),
+              title: const Text('Recovery Follow-up'),
+              onTap: () {
+                Navigator.pop(context);
+                _showReminderDialog(context, 'Recovery Follow-up', 'Recovery follow-up scheduled for outlet ${order['outletName']}.');
+              },
+            ),
+          ],
         ),
-      ).then((_) => setState(() {}));
-    } else if (action == 'whatsapp') {
-      _sendWhatsAppReminder(order);
-    } else if (action == 'payment') {
-      _showReminderDialog(context, 'پیمنٹ ریمائنڈر', 'محترم دکاندار، آپ کا بل رقم Rs: ${order['grandTotal']} واجب الادا ہے۔ براہ کرم ادائیگی فرما دیں۔');
-    } else if (action == 'invoice') {
-      _showInvoiceDialog(context, order);
-    } else if (action == 'recovery') {
-      _showReminderDialog(context, 'ریکوری نوٹس', 'آپ کی دکان ${order['outletName']} کی ریکوری فالو اپ کے لیے سیٹ کر دی گئی ہے۔');
-    }
-  }
-
-  void _sendWhatsAppReminder(Map<String, dynamic> order) async {
-    final message = 'السلام علیکم! آپ کا آرڈر برائے دکان ${order['outletName']} موصول ہو گیا ہے۔ کل بل رقم: Rs: ${order['grandTotal']}۔ شکریہ!';
-    final url = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(message)}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('واٹس ایپ لنک اوپن نہیں ہو سکا')));
-    }
+      ),
+    );
   }
 
   void _showReminderDialog(BuildContext context, String title, String msg) {
@@ -686,14 +817,14 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
         title: Text(title),
         content: Text(msg),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('بند کریں')),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ریماینڈر کامیابی سے ارسال کر دیا گیا')));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Action executed successfully')));
             },
-            child: const Text('ارسال کریں', style: TextStyle(color: Colors.white)),
+            child: const Text('OK', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -704,13 +835,13 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('انگوائس (Invoice): ${order['outletName']}'),
+        title: Text('Invoice: ${order['outletName']}'),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('تاریخ: ${order['date']}'),
+              Text('Date: ${order['date']}'),
               const Divider(),
               ...((order['items'] as List).map((item) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -726,7 +857,7 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('کل بل:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text('Grand Total:', style: TextStyle(fontWeight: FontWeight.bold)),
                   Text('Rs: ${order['grandTotal'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
                 ],
               ),
@@ -734,7 +865,7 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('بند کریں')),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
         ],
       ),
     );
@@ -744,7 +875,7 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: AppData.savedOrders.isEmpty
-          ? const Center(child: Text('آج کا کوئی آرڈر محفوظ نہیں کیا گیا', style: TextStyle(fontSize: 16, color: Colors.grey)))
+          ? const Center(child: Text('No orders saved for today', style: TextStyle(fontSize: 16, color: Colors.grey)))
           : ListView.builder(
               padding: const EdgeInsets.all(8.0),
               itemCount: AppData.savedOrders.length,
@@ -753,52 +884,41 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.symmetric(vertical: 6),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(order['outletName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF004080))),
-                            Row(
-                              children: [
-                                Text(order['date'], style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                                PopupMenuButton<String>(
-                                  onSelected: (val) => _handleMenuAction(val, order, index),
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(value: 'edit', child: Text('ترمیم کریں (Edit)')),
-                                    const PopupMenuItem(value: 'whatsapp', child: Text('واٹس ایپ ریمائنڈر (WhatsApp)')),
-                                    const PopupMenuItem(value: 'payment', child: Text('پیمنٹ ریمائنڈر (Payment)')),
-                                    const PopupMenuItem(value: 'invoice', child: Text('انگوائس دیکھیں (Invoice)')),
-                                    const PopupMenuItem(value: 'recovery', child: Text('ریکوری فالو اپ (Recovery)')),
+                  child: InkWell(
+                    onTap: () => _showOrderActionDialog(context, order, index),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(order['outletName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF004080))),
+                              Text(order['date'], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            ],
+                          ),
+                          const Divider(),
+                          ...((order['items'] as List).map((item) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('${item['title']} (${item['size']})', style: const TextStyle(fontSize: 12)),
+                                    Text('Carton: ${item['carton']} | Packet: ${item['packet']} (Rs: ${item['total']})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const Divider(),
-                        ...((order['items'] as List).map((item) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('${item['title']} (${item['size']})', style: const TextStyle(fontSize: 12)),
-                                  Text('کاٹن: ${item['cotton']} | پیکٹ: ${item['packet']} (Rs: ${item['total']})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-                                ],
-                              ),
-                            ))),
-                        const Divider(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('کل بل:', style: TextStyle(fontWeight: FontWeight.bold)),
-                            Text('Rs: ${order['grandTotal'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                          ],
-                        ),
-                      ],
+                              ))),
+                          const Divider(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Grand Total:', style: TextStyle(fontWeight: FontWeight.bold)),
+                              Text('Rs: ${order['grandTotal'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -808,7 +928,7 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
   }
 }
 
-// پروڈکٹس سکرین
+// Products & Stock Management Screen
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({Key? key}) : super(key: key);
 
@@ -822,9 +942,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
   void _openProductDialog({Map<String, dynamic>? product, int? index}) {
     final titleController = TextEditingController(text: product?['title'] ?? '');
     final sizeController = TextEditingController(text: product?['size'] ?? '');
-    final cottonRateController = TextEditingController(text: product?['cottonRate']?.toString() ?? '');
+    final cartonRateController = TextEditingController(text: product?['cartonRate']?.toString() ?? '');
     final packetRateController = TextEditingController(text: product?['packetRate']?.toString() ?? '');
-    final cottonStockController = TextEditingController(text: product?['cottonStock']?.toString() ?? '');
+    final cartonStockController = TextEditingController(text: product?['cartonStock']?.toString() ?? '');
     final packetStockController = TextEditingController(text: product?['packetStock']?.toString() ?? '');
     final counterUnitPriceController = TextEditingController(text: product?['counterUnitPrice']?.toString() ?? '');
     final retailController = TextEditingController(text: product?['retail']?.toString() ?? '');
@@ -835,24 +955,24 @@ class _ProductsScreenState extends State<ProductsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(isEditing ? 'پروڈکٹ میں ترمیم کریں' : 'نئی پروڈکٹ شامل کریں'),
+          title: Text(isEditing ? 'Edit Product & Stock' : 'Add New Product & Stock'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: titleController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'پروڈکٹ کا نام')),
-                TextField(controller: sizeController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'سائز (Size) مثلاً 18 Gm * 240')),
-                TextField(controller: cottonRateController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'کارٹن ریٹ (Cotton Rate)')),
-                TextField(controller: packetRateController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'پیکٹ ریٹ (Packet Rate)')),
-                TextField(controller: cottonStockController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'کارٹن اسٹاک (Cotton Stock)')),
-                TextField(controller: packetStockController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'پیکٹ اسٹاک (Packet Stock)')),
-                TextField(controller: counterUnitPriceController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'کاؤنٹر یونٹ پرائس')),
-                TextField(controller: retailController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'ریٹیل قیمت (Retail)')),
+                TextField(controller: titleController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Product Name')),
+                TextField(controller: sizeController, textCapitalization: TextCapitalization.words, decoration: const InputDecoration(labelText: 'Size (e.g. 18 Gm * 240)')),
+                TextField(controller: cartonRateController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Carton Rate')),
+                TextField(controller: packetRateController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Packet Rate')),
+                TextField(controller: cartonStockController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Carton Stock')),
+                TextField(controller: packetStockController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Packet Stock')),
+                TextField(controller: counterUnitPriceController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Counter Unit Price')),
+                TextField(controller: retailController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Retail Price')),
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('منسوخ')),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
               onPressed: () {
@@ -861,9 +981,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     final newProductData = {
                       'title': titleController.text,
                       'size': sizeController.text,
-                      'cottonRate': double.tryParse(cottonRateController.text) ?? 0.0,
+                      'cartonRate': double.tryParse(cartonRateController.text) ?? 0.0,
                       'packetRate': double.tryParse(packetRateController.text) ?? 0.0,
-                      'cottonStock': double.tryParse(cottonStockController.text) ?? 0.0,
+                      'cartonStock': double.tryParse(cartonStockController.text) ?? 0.0,
                       'packetStock': double.tryParse(packetStockController.text) ?? 0.0,
                       'counterUnitPrice': double.tryParse(counterUnitPriceController.text) ?? 0.0,
                       'retail': double.tryParse(retailController.text) ?? 0.0,
@@ -877,7 +997,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   Navigator.pop(context);
                 }
               },
-              child: Text(isEditing ? 'اپ ڈیٹ کریں' : 'محفوظ کریں', style: const TextStyle(color: Colors.white)),
+              child: Text(isEditing ? 'Update' : 'Save', style: const TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -889,10 +1009,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('تصدیق'),
-        content: const Text('کیا آپ واقعی اس پروڈکٹ کو مستقل طور پر ڈیلیٹ کرنا چاہتے ہیں؟'),
+        title: const Text('Confirmation'),
+        content: const Text('Are you sure you want to delete this product permanently?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('نہیں')),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
@@ -901,7 +1021,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               });
               Navigator.pop(context);
             },
-            child: const Text('ہاں، ڈیلیٹ کریں', style: TextStyle(color: Colors.white)),
+            child: const Text('Yes, Delete', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -926,7 +1046,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               decoration: const InputDecoration(
-                labelText: 'پروڈکٹ کے نام یا سائز سے تلاش کریں...',
+                labelText: 'Search product by name or size...',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
                 isDense: true,
@@ -989,22 +1109,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text('Cotton Rate: ${p['cottonRate']}', style: const TextStyle(fontSize: 11)),
+                                    Text('Carton Rate: ${p['cartonRate']}', style: const TextStyle(fontSize: 11)),
                                     Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('Cotton Stock: ${p['cottonStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
-                                    Text('Packet Stock: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('Counter Unit Price: ${p['counterUnitPrice']}', style: const TextStyle(fontSize: 11, color: Colors.black54)),
-                                    Text('Retail: ${p['retail']}', style: const TextStyle(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
                                   ],
                                 ),
                               ],
