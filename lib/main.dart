@@ -4,6 +4,113 @@ void main() {
   runApp(const GlobalApp());
 }
 
+// Global App Data Model using ChangeNotifier for persistent state
+class AppDataModel extends ChangeNotifier {
+  final List<Map<String, dynamic>> globalOutlets = [
+    {
+      'name': 'Al-Madina General Store',
+      'owner': 'Muhammad Ali',
+      'phone': '03001234567',
+      'area': 'Saddar',
+      'street': 'Street 3',
+      'city': 'Karachi',
+      'balance': 5000.0
+    },
+    {
+      'name': 'Bahrain Supermarket',
+      'owner': 'Ahmed Raza',
+      'phone': '03219876543',
+      'area': 'Liaquatabad',
+      'street': 'Main Bazaar',
+      'city': 'Karachi',
+      'balance': 12000.0
+    },
+  ];
+
+  final List<Map<String, dynamic>> globalProducts = [
+    {
+      'title': 'Vista Detergent Powder',
+      'size': '18 Gm * 240',
+      'cartonRate': 2244.0,
+      'packetRate': 9.35,
+      'cartonStock': 50.0,
+      'packetStock': 108.0,
+      'counterUnitPrice': 0.0,
+      'retail': 10.0,
+    },
+    {
+      'title': 'Vista Detergent Powder',
+      'size': '85 Gm * 66',
+      'cartonRate': 3036.0,
+      'packetRate': 46.0,
+      'cartonStock': 40.0,
+      'packetStock': 24.0,
+      'counterUnitPrice': 0.0,
+      'retail': 50.0,
+    },
+  ];
+
+  final List<Map<String, dynamic>> savedOrders = [];
+
+  void addOutlet(Map<String, dynamic> outlet) {
+    globalOutlets.add(outlet);
+    notifyListeners();
+  }
+
+  void updateOutlet(int index, Map<String, dynamic> outlet) {
+    globalOutlets[index] = outlet;
+    notifyListeners();
+  }
+
+  void addProduct(Map<String, dynamic> product) {
+    globalProducts.add(product);
+    notifyListeners();
+  }
+
+  void updateProduct(int index, Map<String, dynamic> product) {
+    globalProducts[index] = product;
+    notifyListeners();
+  }
+
+  void deleteProduct(int index) {
+    globalProducts.removeAt(index);
+    notifyListeners();
+  }
+
+  void addOrder(Map<String, dynamic> order) {
+    savedOrders.add(order);
+    notifyListeners();
+  }
+
+  void updateOrder(int index, Map<String, dynamic> order) {
+    savedOrders[index] = order;
+    notifyListeners();
+  }
+
+  void updateStock(int productIndex, double cartonDeduct, double packetDeduct, {bool isAddBack = false}) {
+    if (isAddBack) {
+      globalProducts[productIndex]['cartonStock'] += cartonDeduct;
+      globalProducts[productIndex]['packetStock'] += packetDeduct;
+    } else {
+      globalProducts[productIndex]['cartonStock'] -= cartonDeduct;
+      globalProducts[productIndex]['packetStock'] -= packetDeduct;
+    }
+    notifyListeners();
+  }
+
+  void updateOutletBalance(String outletName, double amountChange) {
+    for (var outlet in globalOutlets) {
+      if (outlet['name'] == outletName) {
+        outlet['balance'] = (outlet['balance'] ?? 0.0) + amountChange;
+      }
+    }
+    notifyListeners();
+  }
+}
+
+// Singleton instance for easy global access across screens
+final AppDataModel appData = AppDataModel();
+
 class GlobalApp extends StatelessWidget {
   const GlobalApp({Key? key}) : super(key: key);
 
@@ -186,55 +293,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Global App Data Storage
-class AppData {
-  static final List<Map<String, dynamic>> globalOutlets = [
-    {
-      'name': 'Al-Madina General Store',
-      'owner': 'Muhammad Ali',
-      'phone': '03001234567',
-      'area': 'Saddar',
-      'street': 'Street 3',
-      'city': 'Karachi',
-      'balance': 5000.0
-    },
-    {
-      'name': 'Bahrain Supermarket',
-      'owner': 'Ahmed Raza',
-      'phone': '03219876543',
-      'area': 'Liaquatabad',
-      'street': 'Main Bazaar',
-      'city': 'Karachi',
-      'balance': 12000.0
-    },
-  ];
-
-  static final List<Map<String, dynamic>> globalProducts = [
-    {
-      'title': 'Vista Detergent Powder',
-      'size': '18 Gm * 240',
-      'cartonRate': 2244.0,
-      'packetRate': 9.35,
-      'cartonStock': 50.0,
-      'packetStock': 108.0,
-      'counterUnitPrice': 0.0,
-      'retail': 10.0,
-    },
-    {
-      'title': 'Vista Detergent Powder',
-      'size': '85 Gm * 66',
-      'cartonRate': 3036.0,
-      'packetRate': 46.0,
-      'cartonStock': 40.0,
-      'packetStock': 24.0,
-      'counterUnitPrice': 0.0,
-      'retail': 50.0,
-    },
-  ];
-
-  static final List<Map<String, dynamic>> savedOrders = [];
-}
-
 // Outlets Screen
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({Key? key}) : super(key: key);
@@ -245,6 +303,22 @@ class OutletsScreen extends StatefulWidget {
 
 class _OutletsScreenState extends State<OutletsScreen> {
   String searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    appData.addListener(_refreshState);
+  }
+
+  @override
+  void dispose() {
+    appData.removeListener(_refreshState);
+    super.dispose();
+  }
+
+  void _refreshState() {
+    if (mounted) setState(() {});
+  }
 
   void _openOutletDialog({Map<String, dynamic>? outlet, int? index}) {
     final nameController = TextEditingController(text: outlet?['name'] ?? '');
@@ -282,22 +356,20 @@ class _OutletsScreenState extends State<OutletsScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
               onPressed: () {
                 if (nameController.text.isNotEmpty) {
-                  setState(() {
-                    final newOutletData = {
-                      'name': nameController.text,
-                      'owner': ownerController.text,
-                      'phone': phoneController.text,
-                      'area': areaController.text,
-                      'street': streetController.text,
-                      'city': cityController.text,
-                      'balance': double.tryParse(balanceController.text) ?? 0.0,
-                    };
-                    if (isEditing && index != null) {
-                      AppData.globalOutlets[index] = newOutletData;
-                    } else {
-                      AppData.globalOutlets.add(newOutletData);
-                    }
-                  });
+                  final newOutletData = {
+                    'name': nameController.text,
+                    'owner': ownerController.text,
+                    'phone': phoneController.text,
+                    'area': areaController.text,
+                    'street': streetController.text,
+                    'city': cityController.text,
+                    'balance': double.tryParse(balanceController.text) ?? 0.0,
+                  };
+                  if (isEditing && index != null) {
+                    appData.updateOutlet(index, newOutletData);
+                  } else {
+                    appData.addOutlet(newOutletData);
+                  }
                   Navigator.pop(context);
                 }
               },
@@ -311,7 +383,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var filteredOutlets = AppData.globalOutlets.where((o) {
+    var filteredOutlets = appData.globalOutlets.where((o) {
       final name = o['name'].toLowerCase();
       final owner = o['owner'].toLowerCase();
       final query = searchQuery.toLowerCase();
@@ -345,6 +417,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
               itemCount: filteredOutlets.length,
               itemBuilder: (context, index) {
                 final outlet = filteredOutlets[index];
+                final realIndex = appData.globalOutlets.indexOf(outlet);
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.symmetric(vertical: 6),
@@ -352,13 +425,13 @@ class _OutletsScreenState extends State<OutletsScreen> {
                     title: Text(outlet['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Owner: ${outlet['owner']} | Phone: ${outlet['phone']}\nArea: ${outlet['area']}, Street: ${outlet['street']}, City: ${outlet['city']}\nBalance: Rs ${outlet['balance']}'),
                     isThreeLine: true,
-                    onTap: () => _openOutletDialog(outlet: outlet, index: AppData.globalOutlets.indexOf(outlet)),
+                    onTap: () => _openOutletDialog(outlet: outlet, index: realIndex),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => _openOutletDialog(outlet: outlet, index: AppData.globalOutlets.indexOf(outlet)),
+                          onPressed: () => _openOutletDialog(outlet: outlet, index: realIndex),
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
@@ -390,7 +463,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
   }
 }
 
-// Outlet Order Screen with stock deduction
+// Outlet Order Screen with accurate stock deduction
 class OutletOrderScreen extends StatefulWidget {
   final String outletName;
   final Map<String, dynamic>? existingOrder;
@@ -408,14 +481,14 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
   @override
   void initState() {
     super.initState();
-    for (int i = 0; i < AppData.globalProducts.length; i++) {
+    for (int i = 0; i < appData.globalProducts.length; i++) {
       String initialCarton = '0';
       String initialPacket = '0';
 
       if (widget.existingOrder != null) {
         final items = widget.existingOrder!['items'] as List;
-        final pName = AppData.globalProducts[i]['title'];
-        final pSize = AppData.globalProducts[i]['size'];
+        final pName = appData.globalProducts[i]['title'];
+        final pSize = appData.globalProducts[i]['size'];
         for (var item in items) {
           if (item['title'] == pName && item['size'] == pSize) {
             initialCarton = item['carton'].toString();
@@ -442,8 +515,8 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
 
   double _calculateTotalAmount() {
     double total = 0.0;
-    for (int i = 0; i < AppData.globalProducts.length; i++) {
-      final p = AppData.globalProducts[i];
+    for (int i = 0; i < appData.globalProducts.length; i++) {
+      final p = appData.globalProducts[i];
       double cartonQty = double.tryParse(_controllers[i]?['carton']?.text ?? '0') ?? 0.0;
       double packetQty = double.tryParse(_controllers[i]?['packet']?.text ?? '0') ?? 0.0;
       
@@ -457,24 +530,26 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
 
   void _saveOrder() {
     List<Map<String, dynamic>> orderedItems = [];
-    for (int i = 0; i < AppData.globalProducts.length; i++) {
-      double cartonQty = double.tryParse(_controllers[i]?['carton']?.text ?? '0') ?? 0.0;
-      double packetQty = double.tryParse(_controllers[i]?['packet']?.text ?? '0') ?? 0.0;
-
-      if (widget.existingOrder != null) {
-        final oldItems = widget.existingOrder!['items'] as List;
-        final pName = AppData.globalProducts[i]['title'];
-        final pSize = AppData.globalProducts[i]['size'];
-        for (var item in oldItems) {
-          if (item['title'] == pName && item['size'] == pSize) {
-            AppData.globalProducts[i]['cartonStock'] += (item['carton'] as num).toDouble();
-            AppData.globalProducts[i]['packetStock'] += (item['packet'] as num).toDouble();
+    
+    // If editing, add back old quantities to stock first
+    if (widget.existingOrder != null) {
+      final oldItems = widget.existingOrder!['items'] as List;
+      for (var oldItem in oldItems) {
+        for (int i = 0; i < appData.globalProducts.length; i++) {
+          final p = appData.globalProducts[i];
+          if (p['title'] == oldItem['title'] && p['size'] == oldItem['size']) {
+            appData.updateStock(i, (oldItem['carton'] as num).toDouble(), (oldItem['packet'] as num).toDouble(), isAddBack: true);
           }
         }
       }
+    }
+
+    for (int i = 0; i < appData.globalProducts.length; i++) {
+      double cartonQty = double.tryParse(_controllers[i]?['carton']?.text ?? '0') ?? 0.0;
+      double packetQty = double.tryParse(_controllers[i]?['packet']?.text ?? '0') ?? 0.0;
 
       if (cartonQty > 0 || packetQty > 0) {
-        final p = AppData.globalProducts[i];
+        final p = appData.globalProducts[i];
         
         if ((p['cartonStock'] ?? 0.0) < cartonQty || (p['packetStock'] ?? 0.0) < packetQty) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Insufficient stock for ${p['title']}!')));
@@ -489,10 +564,8 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
           'total': (cartonQty * p['cartonRate']) + (packetQty * p['packetRate']),
         });
 
-        setState(() {
-          p['cartonStock'] = (p['cartonStock'] ?? 0.0) - cartonQty;
-          p['packetStock'] = (p['packetStock'] ?? 0.0) - packetQty;
-        });
+        // Deduct new quantities from stock
+        appData.updateStock(i, cartonQty, packetQty, isAddBack: false);
       }
     }
 
@@ -501,30 +574,21 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
       return;
     }
 
-    setState(() {
-      final newOrderData = {
-        'outletName': widget.outletName,
-        'date': DateTime.now().toString().substring(0, 16),
-        'items': orderedItems,
-        'grandTotal': _calculateTotalAmount(),
-      };
+    final newOrderData = {
+      'outletName': widget.outletName,
+      'date': DateTime.now().toString().substring(0, 16),
+      'items': orderedItems,
+      'grandTotal': _calculateTotalAmount(),
+    };
 
-      if (widget.existingOrder != null && widget.orderIndex != null) {
-        AppData.savedOrders[widget.orderIndex!] = newOrderData;
-      } else {
-        AppData.savedOrders.add(newOrderData);
-      }
-
-      for (var outlet in AppData.globalOutlets) {
-        if (outlet['name'] == widget.outletName) {
-          if (widget.existingOrder != null) {
-            outlet['balance'] = (outlet['balance'] ?? 0.0) - (widget.existingOrder!['grandTotal'] ?? 0.0) + _calculateTotalAmount();
-          } else {
-            outlet['balance'] = (outlet['balance'] ?? 0.0) + _calculateTotalAmount();
-          }
-        }
-      }
-    });
+    if (widget.existingOrder != null && widget.orderIndex != null) {
+      appData.updateOrder(widget.orderIndex!, newOrderData);
+      double oldTotal = widget.existingOrder!['grandTotal'] ?? 0.0;
+      appData.updateOutletBalance(widget.outletName, _calculateTotalAmount() - oldTotal);
+    } else {
+      appData.addOrder(newOrderData);
+      appData.updateOutletBalance(widget.outletName, _calculateTotalAmount());
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order saved successfully and stock updated!')));
     Navigator.pop(context);
@@ -550,9 +614,9 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(8.0),
-              itemCount: AppData.globalProducts.length,
+              itemCount: appData.globalProducts.length,
               itemBuilder: (context, index) {
-                final p = AppData.globalProducts[index];
+                final p = appData.globalProducts[index];
                 final cartonController = _controllers[index]!['carton']!;
                 final packetController = _controllers[index]!['packet']!;
 
@@ -677,6 +741,22 @@ class RecoveriesScreen extends StatefulWidget {
 }
 
 class _RecoveriesScreenState extends State<RecoveriesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    appData.addListener(_refreshState);
+  }
+
+  @override
+  void dispose() {
+    appData.removeListener(_refreshState);
+    super.dispose();
+  }
+
+  void _refreshState() {
+    if (mounted) setState(() {});
+  }
+
   void _openRecoveryDialog(Map<String, dynamic> outlet) {
     final paidController = TextEditingController();
 
@@ -704,9 +784,7 @@ class _RecoveriesScreenState extends State<RecoveriesScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               onPressed: () {
                 double paidAmount = double.tryParse(paidController.text) ?? 0.0;
-                setState(() {
-                  outlet['balance'] = (outlet['balance'] ?? 0.0) - paidAmount;
-                });
+                appData.updateOutletBalance(outlet['name'], -paidAmount);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Recovery recorded successfully!')));
               },
@@ -723,9 +801,9 @@ class _RecoveriesScreenState extends State<RecoveriesScreen> {
     return Scaffold(
       body: ListView.builder(
         padding: const EdgeInsets.all(8.0),
-        itemCount: AppData.globalOutlets.length,
+        itemCount: appData.globalOutlets.length,
         itemBuilder: (context, index) {
-          final outlet = AppData.globalOutlets[index];
+          final outlet = appData.globalOutlets[index];
           return Card(
             elevation: 2,
             margin: const EdgeInsets.symmetric(vertical: 6),
@@ -746,7 +824,7 @@ class _RecoveriesScreenState extends State<RecoveriesScreen> {
   }
 }
 
-// Sale Orders Screen (Card Click Action instead of Three Dots)
+// Sale Orders Screen
 class SaleOrdersScreen extends StatefulWidget {
   const SaleOrdersScreen({Key? key}) : super(key: key);
 
@@ -755,6 +833,22 @@ class SaleOrdersScreen extends StatefulWidget {
 }
 
 class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
+  @override
+  void initState() {
+    super.initState();
+    appData.addListener(_refreshState);
+  }
+
+  @override
+  void dispose() {
+    appData.removeListener(_refreshState);
+    super.dispose();
+  }
+
+  void _refreshState() {
+    if (mounted) setState(() {});
+  }
+
   void _showOrderActionDialog(BuildContext context, Map<String, dynamic> order, int index) {
     showDialog(
       context: context,
@@ -777,7 +871,7 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
                       orderIndex: index,
                     ),
                   ),
-                ).then((_) => setState(() {}));
+                );
               },
             ),
             ListTile(
@@ -874,13 +968,13 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AppData.savedOrders.isEmpty
+      body: appData.savedOrders.isEmpty
           ? const Center(child: Text('No orders saved for today', style: TextStyle(fontSize: 16, color: Colors.grey)))
           : ListView.builder(
               padding: const EdgeInsets.all(8.0),
-              itemCount: AppData.savedOrders.length,
+              itemCount: appData.savedOrders.length,
               itemBuilder: (context, index) {
-                final order = AppData.savedOrders[index];
+                final order = appData.savedOrders[index];
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.symmetric(vertical: 6),
@@ -939,6 +1033,22 @@ class ProductsScreen extends StatefulWidget {
 class _ProductsScreenState extends State<ProductsScreen> {
   String searchQuery = '';
 
+  @override
+  void initState() {
+    super.initState();
+    appData.addListener(_refreshState);
+  }
+
+  @override
+  void dispose() {
+    appData.removeListener(_refreshState);
+    super.dispose();
+  }
+
+  void _refreshState() {
+    if (mounted) setState(() {});
+  }
+
   void _openProductDialog({Map<String, dynamic>? product, int? index}) {
     final titleController = TextEditingController(text: product?['title'] ?? '');
     final sizeController = TextEditingController(text: product?['size'] ?? '');
@@ -977,23 +1087,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
               onPressed: () {
                 if (titleController.text.isNotEmpty) {
-                  setState(() {
-                    final newProductData = {
-                      'title': titleController.text,
-                      'size': sizeController.text,
-                      'cartonRate': double.tryParse(cartonRateController.text) ?? 0.0,
-                      'packetRate': double.tryParse(packetRateController.text) ?? 0.0,
-                      'cartonStock': double.tryParse(cartonStockController.text) ?? 0.0,
-                      'packetStock': double.tryParse(packetStockController.text) ?? 0.0,
-                      'counterUnitPrice': double.tryParse(counterUnitPriceController.text) ?? 0.0,
-                      'retail': double.tryParse(retailController.text) ?? 0.0,
-                    };
-                    if (isEditing && index != null) {
-                      AppData.globalProducts[index] = newProductData;
-                    } else {
-                      AppData.globalProducts.add(newProductData);
-                    }
-                  });
+                  final newProductData = {
+                    'title': titleController.text,
+                    'size': sizeController.text,
+                    'cartonRate': double.tryParse(cartonRateController.text) ?? 0.0,
+                    'packetRate': double.tryParse(packetRateController.text) ?? 0.0,
+                    'cartonStock': double.tryParse(cartonStockController.text) ?? 0.0,
+                    'packetStock': double.tryParse(packetStockController.text) ?? 0.0,
+                    'counterUnitPrice': double.tryParse(counterUnitPriceController.text) ?? 0.0,
+                    'retail': double.tryParse(retailController.text) ?? 0.0,
+                  };
+                  if (isEditing && index != null) {
+                    appData.updateProduct(index, newProductData);
+                  } else {
+                    appData.addProduct(newProductData);
+                  }
                   Navigator.pop(context);
                 }
               },
@@ -1016,9 +1124,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
-              setState(() {
-                AppData.globalProducts.removeAt(index);
-              });
+              appData.deleteProduct(index);
               Navigator.pop(context);
             },
             child: const Text('Yes, Delete', style: TextStyle(color: Colors.white)),
@@ -1030,7 +1136,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var filteredProducts = AppData.globalProducts.where((p) {
+    var filteredProducts = appData.globalProducts.where((p) {
       final title = p['title'].toLowerCase();
       final size = p['size'].toLowerCase();
       final query = searchQuery.toLowerCase();
@@ -1064,7 +1170,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               itemCount: filteredProducts.length,
               itemBuilder: (context, index) {
                 final p = filteredProducts[index];
-                final originalIndex = AppData.globalProducts.indexOf(p);
+                final originalIndex = appData.globalProducts.indexOf(p);
 
                 return Card(
                   elevation: 2,
@@ -1111,6 +1217,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   children: [
                                     Text('Carton Rate: ${p['cartonRate']}', style: const TextStyle(fontSize: 11)),
                                     Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Carton Stock: ${p['cartonStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
+                                    Text('Packet Stock: ${p['packetStock']}', style: const TextStyle(fontSize: 11, color: Colors.green)),
                                   ],
                                 ),
                               ],
