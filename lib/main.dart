@@ -1295,7 +1295,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 ),
                                 const SizedBox(height: 6),
                                 Row(
-                                  mainAxisAlignment: MainArgument.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text('Carton Rate: ${p['cartonRate']}', style: const TextStyle(fontSize: 11)),
                                     Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
@@ -1324,7 +1324,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF004080),
         onPressed: () => _openProductDialog(),
-        child: const Icon(Icons.add, code: Colors.white),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
