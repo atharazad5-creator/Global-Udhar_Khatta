@@ -294,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Outlets Screen with Welcome WhatsApp integration
+// Outlets Screen
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({Key? key}) : super(key: key);
 
@@ -371,7 +371,6 @@ class _OutletsScreenState extends State<OutletsScreen> {
                     appData.updateOutlet(index, newOutletData);
                   } else {
                     appData.addOutlet(newOutletData);
-                    // Send Welcome WhatsApp Message for New Customer
                     String phone = phoneController.text;
                     String msg = 'Welcome ${ownerController.text} to Global Digital Khata! Your store ${nameController.text} has been successfully registered with us. Thank you!';
                     final url = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(msg)}');
@@ -606,7 +605,6 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
       appData.addOrder(newOrderData);
       appData.updateOutletBalance(widget.outletName, _calculateTotalAmount());
 
-      // If first order, send welcome WhatsApp message
       if (isFirstTimeOrder) {
         String phone = '';
         for (var o in appData.globalOutlets) {
@@ -856,7 +854,7 @@ class _RecoveriesScreenState extends State<RecoveriesScreen> {
   }
 }
 
-// Sale Orders Screen with WhatsApp integration and Red Balance
+// Sale Orders Screen
 class SaleOrdersScreen extends StatefulWidget {
   const SaleOrdersScreen({Key? key}) : super(key: key);
 
@@ -1181,7 +1179,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     'counterUnitPrice': double.tryParse(counterUnitPriceController.text) ?? 0.0,
                     'retail': double.tryParse(retailController.text) ?? 0.0,
                   };
-                  if (isEditing && index != .nullSafe && index != null) {
+                  if (isEditing && index != null) {
                     appData.updateProduct(index, newProductData);
                   } else {
                     appData.addProduct(newProductData);
@@ -1280,7 +1278,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                               ,     Expanded(child: Text('${p['title']} (${p['size']})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                                    Expanded(child: Text('${p['title']} (${p['size']})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                                     Row(
                                       children: [
                                         IconButton(
@@ -1297,7 +1295,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 ),
                                 const SizedBox(height: 6),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainArgument.spaceBetween,
                                   children: [
                                     Text('Carton Rate: ${p['cartonRate']}', style: const TextStyle(fontSize: 11)),
                                     Text('Packet Rate: ${p['packetRate']}', style: const TextStyle(fontSize: 11)),
@@ -1326,7 +1324,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF004080),
         onPressed: () => _openProductDialog(),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, code: Colors.white),
       ),
     );
   }
