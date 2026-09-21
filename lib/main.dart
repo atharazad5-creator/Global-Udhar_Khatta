@@ -294,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Outlets Screen
+// Outlets Screen with Red Balance and Welcome WhatsApp
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({Key? key}) : super(key: key);
 
@@ -431,7 +431,18 @@ class _OutletsScreenState extends State<OutletsScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: ListTile(
                     title: Text(outlet['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('Owner: ${outlet['owner']} | Phone: ${outlet['phone']}\nArea: ${outlet['area']}, Street: ${outlet['street']}, City: ${outlet['city']}\nBalance: Rs ${outlet['balance']}'),
+                    subtitle: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(color: Colors.black54, fontSize: 13),
+                        children: [
+                          TextSpan(text: 'Owner: ${outlet['owner']} | Phone: ${outlet['phone']}\nArea: ${outlet['area']}, Street: ${outlet['street']}, City: ${outlet['city']}\nBalance: '),
+                          TextSpan(
+                            text: 'Rs ${outlet['balance']}',
+                            style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
                     isThreeLine: true,
                     onTap: () => _openOutletDialog(outlet: outlet, index: realIndex),
                     trailing: Row(
@@ -839,7 +850,18 @@ class _RecoveriesScreenState extends State<RecoveriesScreen> {
             margin: const EdgeInsets.symmetric(vertical: 6),
             child: ListTile(
               title: Text(outlet['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('Owner: ${outlet['owner']} | Phone: ${outlet['phone']}\nRemaining Balance: Rs ${outlet['balance']}'),
+              subtitle: RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                  children: [
+                    TextSpan(text: 'Owner: ${outlet['owner']} | Phone: ${outlet['phone']}\nRemaining Balance: '),
+                    TextSpan(
+                      text: 'Rs ${outlet['balance']}',
+                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
               isThreeLine: true,
               trailing: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
@@ -854,7 +876,7 @@ class _RecoveriesScreenState extends State<RecoveriesScreen> {
   }
 }
 
-// Sale Orders Screen
+// Sale Orders Screen (Normal Grand Total Color)
 class SaleOrdersScreen extends StatefulWidget {
   const SaleOrdersScreen({Key? key}) : super(key: key);
 
@@ -1089,7 +1111,7 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
                               const Text('Grand Total:', style: TextStyle(fontWeight: FontWeight.bold)),
                               Text(
                                 'Rs: ${order['grandTotal'].toStringAsFixed(2)} (Balance: Rs $outletBalance)',
-                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
                               ),
                             ],
                           ),
