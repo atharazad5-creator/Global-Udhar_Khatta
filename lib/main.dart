@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const GlobalApp());
 }
 
-// Global App Data Model using ChangeNotifier for persistent state
 class AppDataModel extends ChangeNotifier {
   final List<Map<String, dynamic>> globalOutlets = [
     {
@@ -14,7 +14,8 @@ class AppDataModel extends ChangeNotifier {
       'area': 'Saddar',
       'street': 'Street 3',
       'city': 'Karachi',
-      'balance': 5000.0
+      'balance': 5000.0,
+      'isFirstOrder': false
     },
     {
       'name': 'Bahrain Supermarket',
@@ -23,7 +24,8 @@ class AppDataModel extends ChangeNotifier {
       'area': 'Liaquatabad',
       'street': 'Main Bazaar',
       'city': 'Karachi',
-      'balance': 12000.0
+      'balance': 12000.0,
+      'isFirstOrder': false
     },
   ];
 
@@ -108,7 +110,6 @@ class AppDataModel extends ChangeNotifier {
   }
 }
 
-// Singleton instance for easy global access across screens
 final AppDataModel appData = AppDataModel();
 
 class GlobalApp extends StatelessWidget {
@@ -293,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Outlets Screen
+// Outlets Screen with Welcome WhatsApp integration
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({Key? key}) : super(key: key);
 
@@ -354,7 +355,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF004080)),
-              onPressed: () {
+              onPressed: () async {
                 if (nameController.text.isNotEmpty) {
                   final newOutletData = {
                     'name': nameController.text,
@@ -364,11 +365,19 @@ class _OutletsScreenState extends State<OutletsScreen> {
                     'street': streetController.text,
                     'city': cityController.text,
                     'balance': double.tryParse(balanceController.text) ?? 0.0,
+                    'isFirstOrder': true
                   };
                   if (isEditing && index != null) {
                     appData.updateOutlet(index, newOutletData);
                   } else {
                     appData.addOutlet(newOutletData);
+                    // Send Welcome WhatsApp Message for New Customer
+                    String phone = phoneController.text;
+                    String msg = 'Welcome ${ownerController.text} to Global Digital Khata! Your store ${nameController.text} has been successfully registered with us. Thank you!';
+                    final url = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(msg)}');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
                   }
                   Navigator.pop(context);
                 }
@@ -463,7 +472,7 @@ class _OutletsScreenState extends State<OutletsScreen> {
   }
 }
 
-// Outlet Order Screen with accurate stock deduction
+// Outlet Order Screen
 class OutletOrderScreen extends StatefulWidget {
   final String outletName;
   final Map<String, dynamic>? existingOrder;
@@ -528,10 +537,9 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
     return total;
   }
 
-  void _saveOrder() {
+  void _saveOrder() async {
     List<Map<String, dynamic>> orderedItems = [];
     
-    // If editing, add back old quantities to stock first
     if (widget.existingOrder != null) {
       final oldItems = widget.existingOrder!['items'] as List;
       for (var oldItem in oldItems) {
@@ -564,7 +572,6 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
           'total': (cartonQty * p['cartonRate']) + (packetQty * p['packetRate']),
         });
 
-        // Deduct new quantities from stock
         appData.updateStock(i, cartonQty, packetQty, isAddBack: false);
       }
     }
@@ -581,6 +588,16 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
       'grandTotal': _calculateTotalAmount(),
     };
 
+    bool isFirstTimeOrder = false;
+    for (var outlet in appData.globalOutlets) {
+      if (outlet['name'] == widget.outletName) {
+        if (outlet['isFirstOrder'] == true) {
+          isFirstTimeOrder = true;
+          outlet['isFirstOrder'] = false;
+        }
+      }
+    }
+
     if (widget.existingOrder != null && widget.orderIndex != null) {
       appData.updateOrder(widget.orderIndex!, newOrderData);
       double oldTotal = widget.existingOrder!['grandTotal'] ?? 0.0;
@@ -588,6 +605,21 @@ class _OutletOrderScreenState extends State<OutletOrderScreen> {
     } else {
       appData.addOrder(newOrderData);
       appData.updateOutletBalance(widget.outletName, _calculateTotalAmount());
+
+      // If first order, send welcome WhatsApp message
+      if (isFirstTimeOrder) {
+        String phone = '';
+        for (var o in appData.globalOutlets) {
+          if (o['name'] == widget.outletName) phone = o['phone'];
+        }
+        if (phone.isNotEmpty) {
+          String welcomeMsg = 'Welcome to Global Digital Khata! Thank you for placing your first order with us for ${widget.outletName}. Grand Total: Rs ${_calculateTotalAmount()}';
+          final url = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(welcomeMsg)}');
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          }
+        }
+      }
     }
 
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order saved successfully and stock updated!')));
@@ -824,7 +856,7 @@ class _RecoveriesScreenState extends State<RecoveriesScreen> {
   }
 }
 
-// Sale Orders Screen
+// Sale Orders Screen with WhatsApp integration and Red Balance
 class SaleOrdersScreen extends StatefulWidget {
   const SaleOrdersScreen({Key? key}) : super(key: key);
 
@@ -849,7 +881,33 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
     if (mounted) setState(() {});
   }
 
+  String _getOutletPhone(String outletName) {
+    for (var o in appData.globalOutlets) {
+      if (o['name'] == outletName) return o['phone'] ?? '';
+    }
+    return '';
+  }
+
+  double _getOutletBalance(String outletName) {
+    for (var o in appData.globalOutlets) {
+      if (o['name'] == outletName) return o['balance'] ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  void _launchWhatsApp(String phone, String message) async {
+    final url = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open WhatsApp')));
+    }
+  }
+
   void _showOrderActionDialog(BuildContext context, Map<String, dynamic> order, int index) {
+    String phone = _getOutletPhone(order['outletName']);
+    double balance = _getOutletBalance(order['outletName']);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -877,6 +935,13 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
             ListTile(
               leading: const Icon(Icons.payment, color: Colors.green),
               title: const Text('Payment Reminder'),
+              trailing: IconButton(
+                icon: const Icon(Icons.chat, color: Colors.green),
+                onPressed: () {
+                  String msg = 'Dear shopkeeper, your total bill amount Rs: ${order['grandTotal']} (Current Dues: Rs $balance) is pending. Please clear the dues.';
+                  _launchWhatsApp(phone, msg);
+                },
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showReminderDialog(context, 'Payment Reminder', 'Dear shopkeeper, your total bill amount Rs: ${order['grandTotal']} is pending. Please clear the dues.');
@@ -884,7 +949,14 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.receipt, color: Colors.orange),
-              title: const Text('View Invoice'),
+              title: const Text('Invoice'),
+              trailing: IconButton(
+                icon: const Icon(Icons.chat, color: Colors.green),
+                onPressed: () {
+                  String msg = 'Invoice for ${order['outletName']}:\nDate: ${order['date']}\nGrand Total: Rs ${order['grandTotal']}';
+                  _launchWhatsApp(phone, msg);
+                },
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showInvoiceDialog(context, order);
@@ -892,10 +964,17 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.refresh, color: Colors.purple),
-              title: const Text('Recovery Follow-up'),
+              title: const Text('Recovery'),
+              trailing: IconButton(
+                icon: const Icon(Icons.chat, color: Colors.green),
+                onPressed: () {
+                  String msg = 'Recovery Follow-up for ${order['outletName']}. Current Balance: Rs $balance. Please pay soon.';
+                  _launchWhatsApp(phone, msg);
+                },
+              ),
               onTap: () {
                 Navigator.pop(context);
-                _showReminderDialog(context, 'Recovery Follow-up', 'Recovery follow-up scheduled for outlet ${order['outletName']}.');
+                _showReminderDialog(context, 'Recovery', 'Recovery follow-up scheduled for outlet ${order['outletName']}.');
               },
             ),
           ],
@@ -975,6 +1054,8 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
               itemCount: appData.savedOrders.length,
               itemBuilder: (context, index) {
                 final order = appData.savedOrders[index];
+                double outletBalance = _getOutletBalance(order['outletName']);
+
                 return Card(
                   elevation: 2,
                   margin: const EdgeInsets.symmetric(vertical: 6),
@@ -1008,7 +1089,10 @@ class _SaleOrdersScreenState extends State<SaleOrdersScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text('Grand Total:', style: TextStyle(fontWeight: FontWeight.bold)),
-                              Text('Rs: ${order['grandTotal'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                              Text(
+                                'Rs: ${order['grandTotal'].toStringAsFixed(2)} (Balance: Rs $outletBalance)',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                              ),
                             ],
                           ),
                         ],
@@ -1097,7 +1181,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     'counterUnitPrice': double.tryParse(counterUnitPriceController.text) ?? 0.0,
                     'retail': double.tryParse(retailController.text) ?? 0.0,
                   };
-                  if (isEditing && index != null) {
+                  if (isEditing && index != .nullSafe && index != null) {
                     appData.updateProduct(index, newProductData);
                   } else {
                     appData.addProduct(newProductData);
@@ -1196,7 +1280,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Expanded(child: Text('${p['title']} (${p['size']})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                               ,     Expanded(child: Text('${p['title']} (${p['size']})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
                                     Row(
                                       children: [
                                         IconButton(
