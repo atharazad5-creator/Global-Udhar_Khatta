@@ -1,1 +1,12 @@
+android {
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "com.example.global_udhar_khatta"
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+    }
+}
 
