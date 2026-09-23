@@ -96,7 +96,7 @@ class HomeScreen extends StatelessWidget {
               leading: const Icon(Icons.shopping_bag),
               title: const Text('Products'),
               onTap: () {
-                Navigator.pop(context); // Close drawer
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ProductsScreen()),
@@ -348,17 +348,17 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   Future<void> loadProducts() async {
     final prefs = await SharedPreferences.getInstance();
-    List<String>? savedList = prefs.getStringList('globalpk_products_list');
+    List<String>? savedList = prefs.getStringList('globalpk_unlimited_products_v2');
     if (savedList != null) {
       setState(() {
         products = savedList.map((item) {
-          final parts = item.split('|');
+          final parts = item.split('||');
           return {
-            'name': parts[0],
-            'cartonRate': parts[1],
-            'packetRate': parts[2],
-            'cartonStock': parts[3],
-            'packetStock': parts[4],
+            'name': parts.isNotEmpty ? parts[0] : '',
+            'cartonRate': parts.length > 1 ? parts[1] : '0',
+            'packetRate': parts.length > 2 ? parts[2] : '0',
+            'cartonStock': parts.length > 3 ? parts[3] : '0',
+            'packetStock': parts.length > 4 ? parts[4] : '0',
           };
         }).toList();
       });
@@ -368,23 +368,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Future<void> saveProducts() async {
     final prefs = await SharedPreferences.getInstance();
     List<String> stringList = products.map((p) => 
-      "${p['name']}|${p['cartonRate']}|${p['packetRate']}|${p['cartonStock']}|${p['packetStock']}"
+      "${p['name']}||${p['cartonRate']}||${p['packetRate']}||${p['cartonStock']}||${p['packetStock']}"
     ).toList();
-    await prefs.setStringList('globalpk_products_list', stringList);
+    await prefs.setStringList('globalpk_unlimited_products_v2', stringList);
   }
 
-  void addProductDialog() {
-    nameController.clear();
-    cartonRateController.clear();
-    packetRateController.clear();
-    cartonStockController.clear();
-    packetStockController.clear();
+  void openProductDialog({int? editIndex}) {
+    if (editIndex != null) {
+      nameController.text = products[editIndex]['name'];
+      cartonRateController.text = products[editIndex]['cartonRate'];
+      packetRateController.text = products[editIndex]['packetRate'];
+      cartonStockController.text = products[editIndex]['cartonStock'];
+      packetStockController.text = products[editIndex]['packetStock'];
+    } else {
+      nameController.clear();
+      cartonRateController.clear();
+      packetRateController.clear();
+      cartonStockController.clear();
+      packetStockController.clear();
+    }
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add New Product'),
+          title: Text(editIndex == null ? 'Add New Product' : 'Edit Product'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -430,19 +438,25 @@ class _ProductsScreenState extends State<ProductsScreen> {
               onPressed: () {
                 if (nameController.text.isNotEmpty) {
                   setState(() {
-                    products.add({
+                    final newProduct = {
                       'name': nameController.text,
                       'cartonRate': cartonRateController.text.isEmpty ? '0' : cartonRateController.text,
                       'packetRate': packetRateController.text.isEmpty ? '0' : packetRateController.text,
                       'cartonStock': cartonStockController.text.isEmpty ? '0' : cartonStockController.text,
                       'packetStock': packetStockController.text.isEmpty ? '0' : packetStockController.text,
-                    });
+                    };
+
+                    if (editIndex == null) {
+                      products.add(newProduct);
+                    } else {
+                      products[editIndex] = newProduct;
+                    }
                   });
                   saveProducts();
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Save', style: TextStyle(color: Colors.white)),
+              child: Text(editIndex == null ? 'Save' : 'Update', style: const TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -471,46 +485,55 @@ class _ProductsScreenState extends State<ProductsScreen> {
               padding: const EdgeInsets.all(10),
               itemBuilder: (context, index) {
                 final p = products[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 6),
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Product Name
-                        Text(
-                          p['name'],
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E1B4B),
+                return GestureDetector(
+                  onLongPress: () => openProductDialog(editIndex: index),
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                p['name'],
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E1B4B),
+                                ),
+                              ),
+                              const Text(
+                                '(Long press to edit)',
+                                style: TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                            ],
                           ),
-                        ),
-                        const Divider(height: 12),
-                        // Rates Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Carton Rate: Rs ${p['cartonRate']}',
-                                style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                            Text('Packet Rate: Rs ${p['packetRate']}',
-                                style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        // Stock Row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Carton Stock: ${p['cartonStock']}',
-                                style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
-                            Text('Packet Stock: ${p['packetStock']}',
-                                style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
-                          ],
-                        ),
-                      ],
+                          const Divider(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Carton Rate: Rs ${p['cartonRate']}',
+                                  style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                              Text('Packet Rate: Rs ${p['packetRate']}',
+                                  style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Carton Stock: ${p['cartonStock']}',
+                                  style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
+                              Text('Packet Stock: ${p['packetStock']}',
+                                  style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -518,7 +541,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.purple,
-        onPressed: addProductDialog,
+        onPressed: () => openProductDialog(),
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
