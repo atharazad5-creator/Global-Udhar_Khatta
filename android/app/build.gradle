@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace "com.example.global_udhar_khatta"
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -20,7 +20,7 @@ android {
     defaultConfig {
         applicationId "com.example.global_udhar_khatta"
         minSdkVersion flutter.minSdkVersion
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 1
         versionName "1.0.0"
     }
