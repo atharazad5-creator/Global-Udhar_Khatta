@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 void main() {
   runApp(const MyApp());
@@ -323,7 +325,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// ================= PRODUCTS SCREEN WITH SEARCH, VOICE & IMAGE =================
+// ================= PRODUCTS SCREEN =================
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
 
@@ -341,7 +343,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
   final TextEditingController packetRateController = TextEditingController();
   final TextEditingController cartonStockController = TextEditingController();
   final TextEditingController packetStockController = TextEditingController();
-  final TextEditingController imageUrlController = TextEditingController();
+  
+  String selectedImagePath = '';
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -358,13 +362,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
     packetRateController.dispose();
     cartonStockController.dispose();
     packetStockController.dispose();
-    imageUrlController.dispose();
     super.dispose();
   }
 
   Future<void> loadProducts() async {
     final prefs = await SharedPreferences.getInstance();
-    List<String>? savedList = prefs.getStringList('globalpk_unlimited_products_v4');
+    List<String>? savedList = prefs.getStringList('globalpk_permanent_products_v1');
     if (savedList != null) {
       setState(() {
         products = savedList.map((item) {
@@ -375,7 +378,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             'packetRate': parts.length > 2 ? parts[2] : '0',
             'cartonStock': parts.length > 3 ? parts[3] : '0',
             'packetStock': parts.length > 4 ? parts[4] : '0',
-            'imageUrl': parts.length > 5 ? parts[5] : '',
+            'imagePath': parts.length > 5 ? parts[5] : '',
           };
         }).toList();
         filteredProducts = products;
@@ -386,9 +389,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Future<void> saveProducts() async {
     final prefs = await SharedPreferences.getInstance();
     List<String> stringList = products.map((p) => 
-      "${p['name']}||${p['cartonRate']}||${p['packetRate']}||${p['cartonStock']}||${p['packetStock']}||${p['imageUrl']}"
+      "${p['name']}||${p['cartonRate']}||${p['packetRate']}||${p['cartonStock']}||${p['packetStock']}||${p['imagePath']}"
     ).toList();
-    await prefs.setStringList('globalpk_unlimited_products_v4', stringList);
+    await prefs.setStringList('globalpk_permanent_products_v1', stringList);
   }
 
   void _filterProducts() {
@@ -401,32 +404,59 @@ class _ProductsScreenState extends State<ProductsScreen> {
     });
   }
 
+  // Voice Search / Direct Input Dialog
   void startVoiceSearch() {
+    final TextEditingController voiceController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Voice Search'),
-        content: const Text('Listening... Please speak the product name.'),
+        title: const Text('Search Product'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Speak or type product name to search:'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: voiceController,
+              decoration: const InputDecoration(
+                hintText: 'Enter search text...',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                searchController.text = "Rocket";
-              });
-            },
-            child: const Text('Simulate Voice'),
-          ),
-          TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
+            onPressed: () {
+              setState(() {
+                searchController.text = voiceController.text;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Search', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  void showFullImage(String imageUrl, String productName) {
+  // Pick Image from Gallery
+  Future<void> pickImageFromGallery(StateSetter setStateDialog) async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setStateDialog(() {
+        selectedImagePath = image.path;
+      });
+    }
+  }
+
+  void showFullImage(String imagePath, String productName) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -458,23 +488,23 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   const SizedBox(height: 10),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: imageUrl.isNotEmpty
-                        ? Image.network(
-                            imageUrl,
+                    child: imagePath.isNotEmpty
+                        ? Image.file(
+                            File(imagePath),
                             height: 300,
                             width: double.infinity,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) => const SizedBox(
                               height: 200,
                               child: Center(
-                                child: Text('Could not load image from URL', style: TextStyle(color: Colors.red)),
+                                child: Text('Image not found', style: TextStyle(color: Colors.red)),
                               ),
                             ),
                           )
                         : const SizedBox(
                             height: 200,
                             child: Center(
-                              child: Text('No Image Available', style: TextStyle(color: Colors.grey)),
+                              child: Text('No Image Uploaded', style: TextStyle(color: Colors.grey)),
                             ),
                           ),
                   ),
@@ -494,97 +524,112 @@ class _ProductsScreenState extends State<ProductsScreen> {
       packetRateController.text = products[editIndex]['packetRate'];
       cartonStockController.text = products[editIndex]['cartonStock'];
       packetStockController.text = products[editIndex]['packetStock'];
-      imageUrlController.text = products[editIndex]['imageUrl'];
+      selectedImagePath = products[editIndex]['imagePath'];
     } else {
       nameController.clear();
       cartonRateController.clear();
       packetRateController.clear();
       cartonStockController.clear();
       packetStockController.clear();
-      imageUrlController.clear();
+      selectedImagePath = '';
     }
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(editIndex == null ? 'Add New Product' : 'Edit Product'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Product Name (e.g. Rocket Pumper)'),
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(editIndex == null ? 'Add New Product' : 'Edit Product'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Product Name (e.g. Rocket Pumper)'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: cartonRateController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Carton Rate'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: packetRateController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Packet Rate'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: cartonStockController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Carton Stock'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: packetStockController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Packet Stock'),
+                    ),
+                    const SizedBox(height: 12),
+                    // Upload Picture Button & Preview
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                          onPressed: () => pickImageFromGallery(setStateDialog),
+                          icon: const Icon(Icons.upload_file, color: Colors.white),
+                          label: const Text('Upload Picture', style: TextStyle(color: Colors.white)),
+                        ),
+                        const SizedBox(width: 10),
+                        selectedImagePath.isNotEmpty
+                            ? const Text('Image Selected ✓', style: TextStyle(color: Colors.green, fontSize: 12))
+                            : const Text('No Image', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: cartonRateController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Carton Rate'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: packetRateController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Packet Rate'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: cartonStockController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Carton Stock'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: packetStockController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Packet Stock'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: imageUrlController,
-                  decoration: const InputDecoration(labelText: 'Image URL (Optional)'),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
+                  onPressed: () {
+                    if (nameController.text.isNotEmpty) {
+                      setState(() {
+                        final newProduct = {
+                          'name': nameController.text,
+                          'cartonRate': cartonRateController.text.isEmpty ? '0' : cartonRateController.text,
+                          'packetRate': packetRateController.text.isEmpty ? '0' : packetRateController.text,
+                          'cartonStock': cartonStockController.text.isEmpty ? '0' : cartonStockController.text,
+                          'packetStock': packetStockController.text.isEmpty ? '0' : packetStockController.text,
+                          'imagePath': selectedImagePath,
+                        };
+
+                        if (editIndex == null) {
+                          products.add(newProduct);
+                        } else {
+                          final origIndex = products.indexWhere((p) => p['name'] == filteredProducts[editIndex]['name']);
+                          if (origIndex != -1) {
+                            products[origIndex] = newProduct;
+                          }
+                        }
+                        _filterProducts();
+                      });
+                      saveProducts();
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Text(editIndex == null ? 'Save' : 'Update', style: const TextStyle(color: Colors.white)),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
-              onPressed: () {
-                if (nameController.text.isNotEmpty) {
-                  setState(() {
-                    final newProduct = {
-                      'name': nameController.text,
-                      'cartonRate': cartonRateController.text.isEmpty ? '0' : cartonRateController.text,
-                      'packetRate': packetRateController.text.isEmpty ? '0' : packetRateController.text,
-                      'cartonStock': cartonStockController.text.isEmpty ? '0' : cartonStockController.text,
-                      'packetStock': packetStockController.text.isEmpty ? '0' : packetStockController.text,
-                      'imageUrl': imageUrlController.text,
-                    };
-
-                    if (editIndex == null) {
-                      products.add(newProduct);
-                    } else {
-                      final origIndex = products.indexWhere((p) => p['name'] == filteredProducts[editIndex]['name']);
-                      if (origIndex != -1) {
-                        products[origIndex] = newProduct;
-                      }
-                    }
-                    _filterProducts();
-                  });
-                  saveProducts();
-                  Navigator.pop(context);
-                }
-              },
-              child: Text(editIndex == null ? 'Save' : 'Update', style: const TextStyle(color: Colors.white)),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -638,7 +683,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   child: IconButton(
                     icon: const Icon(Icons.mic, color: Colors.white),
                     onPressed: startVoiceSearch,
-                    tooltip: 'Voice Search',
+                    tooltip: 'Search Bar Voice/Text',
                   ),
                 ),
               ],
@@ -674,9 +719,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        // Product Thumbnail Image Clickable
+                                        // Clickable Thumbnail from Local Gallery
                                         GestureDetector(
-                                          onTap: () => showFullImage(p['imageUrl'], p['name']),
+                                          onTap: () => showFullImage(p['imagePath'], p['name']),
                                           child: Container(
                                             width: 40,
                                             height: 40,
@@ -686,11 +731,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                               borderRadius: BorderRadius.circular(6),
                                               border: Border.all(color: Colors.indigo.shade200),
                                             ),
-                                            child: p['imageUrl'].isNotEmpty
+                                            child: p['imagePath'].isNotEmpty
                                                 ? ClipRRect(
                                                     borderRadius: BorderRadius.circular(6),
-                                                    child: Image.network(
-                                                      p['imageUrl'],
+                                                    child: Image.file(
+                                                      File(p['imagePath']),
                                                       fit: BoxFit.cover,
                                                       errorBuilder: (context, error, stackTrace) =>
                                                           const Icon(Icons.image, size: 20, color: Colors.grey),
