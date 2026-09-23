@@ -323,7 +323,7 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// ================= PRODUCTS SCREEN =================
+// ================= PRODUCTS SCREEN WITH SEARCH, VOICE & IMAGE =================
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
 
@@ -333,22 +333,38 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   List<Map<String, dynamic>> products = [];
+  List<Map<String, dynamic>> filteredProducts = [];
 
+  final TextEditingController searchController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController cartonRateController = TextEditingController();
   final TextEditingController packetRateController = TextEditingController();
   final TextEditingController cartonStockController = TextEditingController();
   final TextEditingController packetStockController = TextEditingController();
+  final TextEditingController imageUrlController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     loadProducts();
+    searchController.addListener(_filterProducts);
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    nameController.dispose();
+    cartonRateController.dispose();
+    packetRateController.dispose();
+    cartonStockController.dispose();
+    packetStockController.dispose();
+    imageUrlController.dispose();
+    super.dispose();
   }
 
   Future<void> loadProducts() async {
     final prefs = await SharedPreferences.getInstance();
-    List<String>? savedList = prefs.getStringList('globalpk_unlimited_products_v2');
+    List<String>? savedList = prefs.getStringList('globalpk_unlimited_products_v4');
     if (savedList != null) {
       setState(() {
         products = savedList.map((item) {
@@ -359,8 +375,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
             'packetRate': parts.length > 2 ? parts[2] : '0',
             'cartonStock': parts.length > 3 ? parts[3] : '0',
             'packetStock': parts.length > 4 ? parts[4] : '0',
+            'imageUrl': parts.length > 5 ? parts[5] : '',
           };
         }).toList();
+        filteredProducts = products;
       });
     }
   }
@@ -368,9 +386,105 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Future<void> saveProducts() async {
     final prefs = await SharedPreferences.getInstance();
     List<String> stringList = products.map((p) => 
-      "${p['name']}||${p['cartonRate']}||${p['packetRate']}||${p['cartonStock']}||${p['packetStock']}"
+      "${p['name']}||${p['cartonRate']}||${p['packetRate']}||${p['cartonStock']}||${p['packetStock']}||${p['imageUrl']}"
     ).toList();
-    await prefs.setStringList('globalpk_unlimited_products_v2', stringList);
+    await prefs.setStringList('globalpk_unlimited_products_v4', stringList);
+  }
+
+  void _filterProducts() {
+    final query = searchController.text.toLowerCase();
+    setState(() {
+      filteredProducts = products.where((p) {
+        final name = p['name'].toLowerCase();
+        return name.contains(query);
+      }).toList();
+    });
+  }
+
+  void startVoiceSearch() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Voice Search'),
+        content: const Text('Listening... Please speak the product name.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                searchController.text = "Rocket";
+              });
+            },
+            child: const Text('Simulate Voice'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showFullImage(String imageUrl, String productName) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    productName,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E1B4B)),
+                  ),
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: imageUrl.isNotEmpty
+                        ? Image.network(
+                            imageUrl,
+                            height: 300,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const SizedBox(
+                              height: 200,
+                              child: Center(
+                                child: Text('Could not load image from URL', style: TextStyle(color: Colors.red)),
+                              ),
+                            ),
+                          )
+                        : const SizedBox(
+                            height: 200,
+                            child: Center(
+                              child: Text('No Image Available', style: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void openProductDialog({int? editIndex}) {
@@ -380,12 +494,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
       packetRateController.text = products[editIndex]['packetRate'];
       cartonStockController.text = products[editIndex]['cartonStock'];
       packetStockController.text = products[editIndex]['packetStock'];
+      imageUrlController.text = products[editIndex]['imageUrl'];
     } else {
       nameController.clear();
       cartonRateController.clear();
       packetRateController.clear();
       cartonStockController.clear();
       packetStockController.clear();
+      imageUrlController.clear();
     }
 
     showDialog(
@@ -425,6 +541,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(labelText: 'Packet Stock'),
                 ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: imageUrlController,
+                  decoration: const InputDecoration(labelText: 'Image URL (Optional)'),
+                ),
               ],
             ),
           ),
@@ -444,13 +565,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       'packetRate': packetRateController.text.isEmpty ? '0' : packetRateController.text,
                       'cartonStock': cartonStockController.text.isEmpty ? '0' : cartonStockController.text,
                       'packetStock': packetStockController.text.isEmpty ? '0' : packetStockController.text,
+                      'imageUrl': imageUrlController.text,
                     };
 
                     if (editIndex == null) {
                       products.add(newProduct);
                     } else {
-                      products[editIndex] = newProduct;
+                      final origIndex = products.indexWhere((p) => p['name'] == filteredProducts[editIndex]['name']);
+                      if (origIndex != -1) {
+                        products[origIndex] = newProduct;
+                      }
                     }
+                    _filterProducts();
                   });
                   saveProducts();
                   Navigator.pop(context);
@@ -472,73 +598,153 @@ class _ProductsScreenState extends State<ProductsScreen> {
         title: const Text('Products', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: products.isEmpty
-          ? const Center(
-              child: Text(
-                'No Products Added Yet.\nTap + to add a new product.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54, fontSize: 16),
-              ),
-            )
-          : ListView.builder(
-              itemCount: products.length,
-              padding: const EdgeInsets.all(10),
-              itemBuilder: (context, index) {
-                final p = products[index];
-                return GestureDetector(
-                  onLongPress: () => openProductDialog(editIndex: index),
-                  child: Card(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    elevation: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                p['name'],
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1E1B4B),
-                                ),
-                              ),
-                              const Text(
-                                '(Long press to edit)',
-                                style: TextStyle(fontSize: 10, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                          const Divider(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Carton Rate: Rs ${p['cartonRate']}',
-                                  style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                              Text('Packet Rate: Rs ${p['packetRate']}',
-                                  style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Carton Stock: ${p['cartonStock']}',
-                                  style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
-                              Text('Packet Stock: ${p['packetStock']}',
-                                  style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
-                            ],
-                          ),
-                        ],
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            color: Colors.white,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search product by name...',
+                      prefixIcon: const Icon(Icons.search, color: Colors.indigo),
+                      suffixIcon: searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                searchController.clear();
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
                       ),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                     ),
                   ),
-                );
-              },
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1B4B),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.mic, color: Colors.white),
+                    onPressed: startVoiceSearch,
+                    tooltip: 'Voice Search',
+                  ),
+                ),
+              ],
             ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: filteredProducts.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No Products Found.\nTap + to add a new product.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.black54, fontSize: 16),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: filteredProducts.length,
+                    padding: const EdgeInsets.all(10),
+                    itemBuilder: (context, index) {
+                      final p = filteredProducts[index];
+                      return GestureDetector(
+                        onLongPress: () => openProductDialog(editIndex: index),
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          elevation: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        // Product Thumbnail Image Clickable
+                                        GestureDetector(
+                                          onTap: () => showFullImage(p['imageUrl'], p['name']),
+                                          child: Container(
+                                            width: 40,
+                                            height: 40,
+                                            margin: const EdgeInsets.only(right: 10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade200,
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: Colors.indigo.shade200),
+                                            ),
+                                            child: p['imageUrl'].isNotEmpty
+                                                ? ClipRRect(
+                                                    borderRadius: BorderRadius.circular(6),
+                                                    child: Image.network(
+                                                      p['imageUrl'],
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context, error, stackTrace) =>
+                                                          const Icon(Icons.image, size: 20, color: Colors.grey),
+                                                    ),
+                                                  )
+                                                : const Icon(Icons.image, size: 20, color: Colors.grey),
+                                          ),
+                                        ),
+                                        Text(
+                                          p['name'],
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E1B4B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Text(
+                                      '(Long press to edit)',
+                                      style: TextStyle(fontSize: 10, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Carton Rate: Rs ${p['cartonRate']}',
+                                        style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                                    Text('Packet Rate: Rs ${p['packetRate']}',
+                                        style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Carton Stock: ${p['cartonStock']}',
+                                        style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
+                                    Text('Packet Stock: ${p['packetStock']}',
+                                        style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.purple,
         onPressed: () => openProductDialog(),
