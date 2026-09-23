@@ -156,7 +156,6 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Daily Sale Order Summary heading above Route Date/Day
             const Center(
               child: Text(
                 "Daily Sale Order Summary",
@@ -164,8 +163,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Route Date & Day section (Left blank as requested)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: const Column(
@@ -174,14 +171,14 @@ class HomeScreen extends StatelessWidget {
                   Row(
                     children: [
                       Text("Route Date:    ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                      Text("", style: TextStyle(fontSize: 15)), // Blank
+                      Text("", style: TextStyle(fontSize: 15)),
                     ],
                   ),
                   SizedBox(height: 6),
                   Row(
                     children: [
                       Text("Route Day:     ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                      Text("", style: TextStyle(fontSize: 15)), // Blank
+                      Text("", style: TextStyle(fontSize: 15)),
                     ],
                   ),
                   SizedBox(height: 6),
@@ -197,8 +194,6 @@ class HomeScreen extends StatelessWidget {
             ),
             const Divider(thickness: 1),
             const SizedBox(height: 8),
-
-            // Route Summary Section
             const Center(
               child: Text(
                 "📍 Route Summary",
@@ -222,8 +217,6 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-
-            // Today Summary Section
             const Center(
               child: Text(
                 "📋 Today Summary",
@@ -243,8 +236,6 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 8),
             _buildWideSummaryCard("Today Recovery", "0.0", Icons.account_balance_wallet),
             const SizedBox(height: 16),
-
-            // Records Count Section
             const Center(
               child: Text(
                 "# Records Count",
@@ -289,7 +280,7 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 12, color: Colors.black80, fontWeight: FontWeight.w500)),
+                Text(title, style: const TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 4),
                 Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
               ],
@@ -317,7 +308,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               Icon(icon, color: Colors.indigo.shade300, size: 28),
               const SizedBox(width: 10),
-              Text(title, style: const TextStyle(fontSize: 14, color: Colors.black80, fontWeight: FontWeight.w500)),
+              Text(title, style: const TextStyle(fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w500)),
             ],
           ),
           Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
