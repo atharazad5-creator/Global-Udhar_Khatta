@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 void main() {
@@ -273,7 +274,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
   final TextEditingController packetRateController = TextEditingController();
   final TextEditingController cartonStockController = TextEditingController();
   final TextEditingController packetStockController = TextEditingController();
-  final TextEditingController imagePathController = TextEditingController();
+  
+  String selectedImagePath = '';
 
   @override
   void initState() {
@@ -290,13 +292,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
     packetRateController.dispose();
     cartonStockController.dispose();
     packetStockController.dispose();
-    imagePathController.dispose();
     super.dispose();
   }
 
   Future<void> loadProducts() async {
     final prefs = await SharedPreferences.getInstance();
-    List<String>? savedList = prefs.getStringList('globalpk_permanent_products_v2');
+    List<String>? savedList = prefs.getStringList('globalpk_permanent_products_v3');
     if (savedList != null) {
       setState(() {
         products = savedList.map((item) {
@@ -320,7 +321,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     List<String> stringList = products.map((p) => 
       "${p['name']}||${p['cartonRate']}||${p['packetRate']}||${p['cartonStock']}||${p['packetStock']}||${p['imagePath']}"
     ).toList();
-    await prefs.setStringList('globalpk_permanent_products_v2', stringList);
+    await prefs.setStringList('globalpk_permanent_products_v3', stringList);
   }
 
   void _filterProducts() {
@@ -332,47 +333,83 @@ class _ProductsScreenState extends State<ProductsScreen> {
     });
   }
 
-  // Voice/Text Search Dialog
+  // Interactive Voice / Listening Simulation & Direct Navigation Search
   void startVoiceSearch() {
-    final TextEditingController voiceController = TextEditingController(text: searchController.text);
+    final TextEditingController voiceController = TextEditingController();
+    bool isListening = true;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Voice / Text Search'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Speak or type product name:'),
-            const SizedBox(height: 10),
-            TextField(
-              controller: voiceController,
-              decoration: const InputDecoration(
-                hintText: 'Type search keyword...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.mic, color: Colors.indigo),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.mic, color: isListening ? Colors.red : Colors.grey, size: 28),
+                  const SizedBox(width: 8),
+                  const Text('Listening for Voice...'),
+                ],
               ),
-              autofocus: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
-            onPressed: () {
-              setState(() {
-                searchController.text = voiceController.text;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Apply', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isListening ? 'Speak product name now...' : 'Processing voice input...',
+                    style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: voiceController,
+                    decoration: const InputDecoration(
+                      hintText: 'Type or spoken words appear here...',
+                      border: OutlineInputBorder(),
+                    ),
+                    autofocus: true,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
+                  onPressed: () {
+                    setState(() {
+                      searchController.text = voiceController.text;
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Search & Go', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
+  }
+
+  // File Picker for Gallery / File Manager image selection
+  Future<void> pickImageFromFileManager(StateSetter setStateDialog) async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setStateDialog(() {
+          selectedImagePath = result.files.single.path!;
+        });
+      }
+    } catch (e) {
+      // Fallback if picker encounters any platform issue
+      setStateDialog(() {
+        selectedImagePath = '';
+      });
+    }
   }
 
   // Full Image Preview Dialog
@@ -415,23 +452,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             width: double.infinity,
                             fit: BoxFit.cover,
                           )
-                        : imagePath.startsWith('http')
-                            ? Image.network(
-                                imagePath,
-                                height: 280,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, e, s) => const SizedBox(
-                                  height: 200,
-                                  child: Center(child: Text('Invalid Image Path', style: TextStyle(color: Colors.red))),
-                                ),
-                              )
-                            : const SizedBox(
-                                height: 200,
-                                child: Center(
-                                  child: Text('No Local Image Found', style: TextStyle(color: Colors.grey)),
-                                ),
-                              ),
+                        : const SizedBox(
+                            height: 200,
+                            child: Center(
+                              child: Text('No Image Available', style: TextStyle(color: Colors.grey)),
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -449,100 +475,119 @@ class _ProductsScreenState extends State<ProductsScreen> {
       packetRateController.text = filteredProducts[editIndex]['packetRate'];
       cartonStockController.text = filteredProducts[editIndex]['cartonStock'];
       packetStockController.text = filteredProducts[editIndex]['packetStock'];
-      imagePathController.text = filteredProducts[editIndex]['imagePath'];
+      selectedImagePath = filteredProducts[editIndex]['imagePath'];
     } else {
       nameController.clear();
       cartonRateController.clear();
       packetRateController.clear();
       cartonStockController.clear();
       packetStockController.clear();
-      imagePathController.clear();
+      selectedImagePath = '';
     }
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(editIndex == null ? 'Add New Product' : 'Edit Product'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Product Name'),
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(editIndex == null ? 'Add New Product' : 'Edit Product'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Product Name'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: cartonRateController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Carton Rate'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: packetRateController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Packet Rate'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: cartonStockController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Carton Stock'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: packetStockController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Packet Stock'),
+                    ),
+                    const SizedBox(height: 12),
+                    // Upload Image from Gallery / File Manager Button
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                          onPressed: () => pickImageFromFileManager(setStateDialog),
+                          icon: const Icon(Icons.folder_open, color: Colors.white),
+                          label: const Text('Select Image', style: TextStyle(color: Colors.white)),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            selectedImagePath.isNotEmpty ? 'Image Selected ✓' : 'No Image Chosen',
+                            style: TextStyle(
+                              color: selectedImagePath.isNotEmpty ? Colors.green : Colors.grey,
+                              fontSize: 12,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: cartonRateController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Carton Rate'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: packetRateController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Packet Rate'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: cartonStockController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Carton Stock'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: packetStockController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Packet Stock'),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: imagePathController,
-                  decoration: const InputDecoration(
-                    labelText: 'Image Storage Path / Local File Path',
-                    hintText: '/storage/emulated/0/Download/image.jpg',
-                  ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
+                  onPressed: () {
+                    if (nameController.text.isNotEmpty) {
+                      setState(() {
+                        final newProduct = {
+                          'name': nameController.text,
+                          'cartonRate': cartonRateController.text.isEmpty ? '0' : cartonRateController.text,
+                          'packetRate': packetRateController.text.isEmpty ? '0' : packetRateController.text,
+                          'cartonStock': cartonStockController.text.isEmpty ? '0' : cartonStockController.text,
+                          'packetStock': packetStockController.text.isEmpty ? '0' : packetStockController.text,
+                          'imagePath': selectedImagePath,
+                        };
+
+                        if (editIndex == null) {
+                          products.add(newProduct);
+                        } else {
+                          final origIndex = products.indexWhere((p) => p['name'] == filteredProducts[editIndex]['name']);
+                          if (origIndex != -1) {
+                            products[origIndex] = newProduct;
+                          }
+                        }
+                        _filterProducts();
+                      });
+                      saveProducts();
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Text(editIndex == null ? 'Save' : 'Update', style: const TextStyle(color: Colors.white)),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
-              onPressed: () {
-                if (nameController.text.isNotEmpty) {
-                  setState(() {
-                    final newProduct = {
-                      'name': nameController.text,
-                      'cartonRate': cartonRateController.text.isEmpty ? '0' : cartonRateController.text,
-                      'packetRate': packetRateController.text.isEmpty ? '0' : packetRateController.text,
-                      'cartonStock': cartonStockController.text.isEmpty ? '0' : cartonStockController.text,
-                      'packetStock': packetStockController.text.isEmpty ? '0' : packetStockController.text,
-                      'imagePath': imagePathController.text,
-                    };
-
-                    if (editIndex == null) {
-                      products.add(newProduct);
-                    } else {
-                      final origIndex = products.indexWhere((p) => p['name'] == filteredProducts[editIndex]['name']);
-                      if (origIndex != -1) {
-                        products[origIndex] = newProduct;
-                      }
-                    }
-                    _filterProducts();
-                  });
-                  saveProducts();
-                  Navigator.pop(context);
-                }
-              },
-              child: Text(editIndex == null ? 'Save' : 'Update', style: const TextStyle(color: Colors.white)),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -594,7 +639,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   child: IconButton(
                     icon: const Icon(Icons.mic, color: Colors.white),
                     onPressed: startVoiceSearch,
-                    tooltip: 'Voice / Text Search',
+                    tooltip: 'Voice Listening Search',
                   ),
                 ),
               ],
@@ -641,14 +686,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                               borderRadius: BorderRadius.circular(6),
                                               border: Border.all(color: Colors.indigo.shade200),
                                             ),
-                                            child: p['imagePath'].isNotEmpty
+                                            child: p['imagePath'].isNotEmpty && File(p['imagePath']).existsSync()
                                                 ? ClipRRect(
                                                     borderRadius: BorderRadius.circular(6),
                                                     child: Image.file(
                                                       File(p['imagePath']),
                                                       fit: BoxFit.cover,
-                                                      errorBuilder: (context, error, stackTrace) =>
-                                                          const Icon(Icons.image, size: 20, color: Colors.grey),
                                                     ),
                                                   )
                                                 : const Icon(Icons.image, size: 20, color: Colors.grey),
