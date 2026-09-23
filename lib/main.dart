@@ -134,7 +134,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: const Icon(Icons.person_swap),
+              leading: const Icon(Icons.swap_horiz),
               title: const Text('Switch User'),
               onTap: () => Navigator.pop(context),
             ),
