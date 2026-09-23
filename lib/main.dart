@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(const MyApp());
@@ -96,7 +95,13 @@ class HomeScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.shopping_bag),
               title: const Text('Products'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context); // Close drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProductsScreen()),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.payment),
@@ -313,6 +318,208 @@ class HomeScreen extends StatelessWidget {
           ),
           Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
         ],
+      ),
+    );
+  }
+}
+
+// ================= PRODUCTS SCREEN =================
+class ProductsScreen extends StatefulWidget {
+  const ProductsScreen({super.key});
+
+  @override
+  State<ProductsScreen> createState() => _ProductsScreenState();
+}
+
+class _ProductsScreenState extends State<ProductsScreen> {
+  List<Map<String, dynamic>> products = [];
+
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController cartonRateController = TextEditingController();
+  final TextEditingController packetRateController = TextEditingController();
+  final TextEditingController cartonStockController = TextEditingController();
+  final TextEditingController packetStockController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    loadProducts();
+  }
+
+  Future<void> loadProducts() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String>? savedList = prefs.getStringList('globalpk_products_list');
+    if (savedList != null) {
+      setState(() {
+        products = savedList.map((item) {
+          final parts = item.split('|');
+          return {
+            'name': parts[0],
+            'cartonRate': parts[1],
+            'packetRate': parts[2],
+            'cartonStock': parts[3],
+            'packetStock': parts[4],
+          };
+        }).toList();
+      });
+    }
+  }
+
+  Future<void> saveProducts() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> stringList = products.map((p) => 
+      "${p['name']}|${p['cartonRate']}|${p['packetRate']}|${p['cartonStock']}|${p['packetStock']}"
+    ).toList();
+    await prefs.setStringList('globalpk_products_list', stringList);
+  }
+
+  void addProductDialog() {
+    nameController.clear();
+    cartonRateController.clear();
+    packetRateController.clear();
+    cartonStockController.clear();
+    packetStockController.clear();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add New Product'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Product Name (e.g. Rocket Pumper)'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: cartonRateController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Carton Rate'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: packetRateController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Packet Rate'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: cartonStockController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Carton Stock'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: packetStockController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Packet Stock'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
+              onPressed: () {
+                if (nameController.text.isNotEmpty) {
+                  setState(() {
+                    products.add({
+                      'name': nameController.text,
+                      'cartonRate': cartonRateController.text.isEmpty ? '0' : cartonRateController.text,
+                      'packetRate': packetRateController.text.isEmpty ? '0' : packetRateController.text,
+                      'cartonStock': cartonStockController.text.isEmpty ? '0' : cartonStockController.text,
+                      'packetStock': packetStockController.text.isEmpty ? '0' : packetStockController.text,
+                    });
+                  });
+                  saveProducts();
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Save', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E1B4B),
+        title: const Text('Products', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: products.isEmpty
+          ? const Center(
+              child: Text(
+                'No Products Added Yet.\nTap + to add a new product.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.black54, fontSize: 16),
+              ),
+            )
+          : ListView.builder(
+              itemCount: products.length,
+              padding: const EdgeInsets.all(10),
+              itemBuilder: (context, index) {
+                final p = products[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Product Name
+                        Text(
+                          p['name'],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E1B4B),
+                          ),
+                        ),
+                        const Divider(height: 12),
+                        // Rates Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Carton Rate: Rs ${p['cartonRate']}',
+                                style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                            Text('Packet Rate: Rs ${p['packetRate']}',
+                                style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        // Stock Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Carton Stock: ${p['cartonStock']}',
+                                style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
+                            Text('Packet Stock: ${p['packetStock']}',
+                                style: const TextStyle(fontSize: 13, color: Colors.indigo, fontWeight: FontWeight.w500)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.purple,
+        onPressed: addProductDialog,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
