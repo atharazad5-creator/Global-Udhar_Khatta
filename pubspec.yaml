@@ -1,6 +1,7 @@
-name: global_udhar_khatta
-description: "A new Flutter project."
+name: Global_Udhar_Khatta
+description: "A new Flutter project for Global Udhar Khatta."
 publish_to: 'none'
+
 version: 1.0.0+1
 
 environment:
@@ -9,15 +10,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.2
-  url_launcher: ^6.2.5
-  shared_preferences: ^2.2.2
-  file_picker: ^11.0.2
+  file_picker: ^8.0.0
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.0
+    sdk: flutter_test
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
