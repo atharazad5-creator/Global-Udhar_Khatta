@@ -31,7 +31,6 @@ class ProductsScreen extends StatefulWidget {
 class _ProductsScreenState extends State<ProductsScreen> {
   String? _selectedFilepath;
 
-  // گیلری یا فائل مینیجر سے تصویر/فाइल اٹھانے کا فنکشن
   Future<void> _pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -44,12 +43,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
           _selectedFilepath = result.files.single.path;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('فائل منتخب ہو گئی')),
+          const SnackBar(content: Text('فائل کامیابی سے منتخب ہو گئی')),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('فائل منتخب کرنے میں مسئلہ آیا')),
+        const SnackBar(content: Text('فائل منتخب کرنے میں مسئلہ پیش آیا')),
       );
     }
   }
