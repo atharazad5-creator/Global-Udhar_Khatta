@@ -1,86 +1,107 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const GlobalUdharApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class GlobalUdharApp extends StatelessWidget {
+  const GlobalUdharApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Global Udhar Khatta',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        useMaterial3: true,
       ),
-      home: const ProductsScreen(),
+      home: const DashboardScreen(),
     );
   }
 }
 
-class ProductsScreen extends StatefulWidget {
-  const ProductsScreen({super.key});
-
-  @override
-  State<ProductsScreen> createState() => _ProductsScreenState();
-}
-
-class _ProductsScreenState extends State<ProductsScreen> {
-  String? _selectedFilepath;
-
-  Future<void> _pickFile() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'png', 'jpeg'],
-      );
-
-      if (result != null && result.files.single.path != null) {
-        setState(() {
-          _selectedFilepath = result.files.single.path;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('فائل کامیابی سے منتخب ہو گئی')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('فائل منتخب کرنے میں مسئلہ پیش آیا')),
-      );
-    }
-  }
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Global Udhar Khatta'),
+        title: const Text('Global Udhar Khatta - New Setup'),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blueAccent),
+              child: Text(
+                'مینو (Menu)',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.store),
+              title: const Text('ماي آؤٹ لیٹ (My Outlet)'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.inventory),
+              title: const Text('اسٹاک (Stock)'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart),
+              title: const Text('سیل آرڈر (Sales Order)'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+      body: Padding(
+        padding: const All(16.0),
+        child: GridView.count(
+          crossAxisCount: 1,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          shrinkWrap: true,
+          children: [
+            _buildDashboardCard(
+                'ماي آؤٹ لیٹ (My Outlet)', Icons.store, Colors.orange),
+            _buildDashboardCard('اسٹاک (Stock)', Icons.inventory, Colors.green),
+            _buildDashboardCard(
+                'سیل آرڈر (Sales Order)', Icons.shopping_cart, Colors.purple),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardCard(String title, IconData icon, Color color) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: () {},
+        child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              if (_selectedFilepath != null)
-                Text(
-                  'منتخب کردہ فائل:\n$_selectedFilepath',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14),
-                )
-              else
-                const Text(
-                  'کوئی فائل منتخب نہیں کی گئی',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _pickFile,
-                icon: const Icon(Icons.folder_open),
-                label: const Text('فائل منتخب کریں'),
+              Icon(icon, size: 48, color: color),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ],
           ),
