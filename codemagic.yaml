@@ -3,16 +3,18 @@ workflows:
     name: Android Build
     max_build_duration: 30
     instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      android_signing:
+        - workflow_credentials
     scripts:
-      - name: Recreate Android files without v1 embedding
-        script: |
-          rm -rf android
-          flutter create . --platforms=android --project-name=global_udhar_khatta
-      - name: Clean and Get Flutter packages
+      - name: Set up project name and clean
         script: |
           flutter clean
-          flutter pub get
-      - name: Build Android APK
-        script: flutter build apk --release
+          flutter create . --platforms=android --project-name=global_udhar_khatta
+      - name: Get packages
+        script: flutter pub get
+      - name: Build APK Release
+        script: flutter build apk --release --no-tree-shake-icons
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
