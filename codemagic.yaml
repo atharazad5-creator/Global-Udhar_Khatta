@@ -1,21 +1,21 @@
 workflows:
-  global-udhar-workflow:
-    name: Global Udhar Khatta Modern Build
+  android-workflow:
+    name: Global Udhar Khatta Fresh Build
     max_build_duration: 30
     instance_type: mac_mini_m1
     environment:
       flutter: stable
     scripts:
-      - name: Fresh Environment Reset & Setup
+      - name: Clean Environment And Create Android
         script: |
-          flutter doctor
+          flutter clean
           rm -rf android
           flutter create . --platforms=android --project-name=global_udhar_khatta
-      - name: Fetch Dependencies Cleanly
+      - name: Get Dependencies
         script: |
-          flutter pub cache clean -f
           flutter pub get
-      - name: Compile Release APK
-        script: flutter build apk --release --no-tree-shake-icons
+      - name: Build APK Release
+        script: |
+          flutter build apk --release --no-tree-shake-icons
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
